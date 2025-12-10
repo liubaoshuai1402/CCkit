@@ -1,0 +1,7 @@
+{
+    "M1001": "generate_strain.py",
+    "M1002": "generate_YSZ.py",
+    "A2001": "global_bond_analysis.py",
+    "A2002": "local_bond_analysis.py",
+    "clean": "clean_data.py"
+}

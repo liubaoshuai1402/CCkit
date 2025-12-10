@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+import argparse
+import subprocess
+import sys
+import os
+import json
+import pathlib
+import shlex
+import traceback
+
+# ====== 1. 加载配置文件 ======
+def load_config():
+    config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools.json")
+    if not os.path.exists(config_file):
+        print("Not find tools.json !")
+        sys.exit(1)
+    with open(config_file, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+CONFIG = load_config()
+
+# ====== 2. 查找功能脚本（支持环境变量 + 递归搜索） ======
+def find_script(script_name):
+    env_paths = os.environ.get("CCkit_PATHS", "")
+    if not env_paths:
+        raise RuntimeError("请先设置环境变量 CCkit_PATHS,指向软件安装目录")
+
+    search_dirs = env_paths.split(os.pathsep)
+
+    for base_dir in search_dirs:
+        base_path = pathlib.Path(base_dir)
+        if not base_path.exists():
+            continue
+        for path in base_path.rglob(script_name):
+            if path.is_file():
+                return str(path.resolve())
+
+    raise FileNotFoundError(
+        f"找不到脚本 {script_name}\n"
+        f"请确认 {env_paths} 下存在此文件"
+    )
+
+# ====== 3. 执行功能脚本（参数透传） ======
+def run_command(func, extra_args):
+    if func not in CONFIG:
+        print(f"未知功能：{func}")
+        return
+
+    script_name = CONFIG[func]
+
+    try:
+        script_path = find_script(script_name)
+    except Exception as e:
+        print(f"查找脚本失败：{e}")
+        return
+
+    cmd = [sys.executable, script_path] + (extra_args or [])
+
+    print(f"\nrun command: {' '.join(shlex.quote(c) for c in cmd)}\n")
+
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Execution of {func} failed, exit code: {e.returncode}")
+    except KeyboardInterrupt:
+        print("User Interruption: (Ctrl+C)")
+    except Exception:
+        print("An unexpected error occurred while running the script:")
+        traceback.print_exc()
+
+# ====== 4. 菜单模式（支持输入额外参数） ======
+def menu_mode():
+    while True:
+        print("\n====== Functions ======")
+        for key, script in CONFIG.items():
+            print(f"[{key}] python {script}")
+        print("[q] Exit")
+
+        choice = input("please choose a function(or q exit): ").strip()
+        if choice.lower() == "q":
+            sys.exit(0)
+
+        if choice in CONFIG:
+            arg_line = input("parameters for your function: ").strip()
+            extra_args = shlex.split(arg_line) if arg_line else []
+            run_command(choice, extra_args)
+        else:
+            print("Invalid choice")
+
+# ====== 5. 主入口 ======
+def main():
+    parser = argparse.ArgumentParser(description="Welcome to CCkit")
+
+    parser.add_argument("--listall", action="store_true", help="List all available functions")
+    parser.add_argument("func", nargs="?", help = f"functions (available:{', '.join(CONFIG.keys())})")
+    parser.add_argument("extra", nargs=argparse.REMAINDER, help="parameters go to function scripts")
+
+    args = parser.parse_args()
+
+    if args.listall:
+        print("\n".join(CONFIG.keys()))
+        sys.exit(0)
+    if not args.func:
+        menu_mode()
+    else:
+        run_command(args.func, args.extra)
+
+if __name__ == "__main__":
+    main()
