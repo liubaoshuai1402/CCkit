@@ -46,7 +46,12 @@ def run_command(func, extra_args):
         print(f"未知功能：{func}")
         return
 
-    script_name = CONFIG[func]
+    # 兼容新版 JSON
+    info = CONFIG[func]
+    if isinstance(info, dict):
+        script_name = info.get("script")
+    else:
+        script_name = info
 
     try:
         script_path = find_script(script_name)
@@ -72,8 +77,12 @@ def run_command(func, extra_args):
 def menu_mode():
     while True:
         print("\n====== Functions ======")
-        for key, script in CONFIG.items():
-            print(f"[{key}] python {script}")
+        for key, info in CONFIG.items():
+            if isinstance(info, dict):
+                script_name = info.get("script", "")
+            else:
+                script_name = info
+            print(f"[{key}] python {script_name}")
         print("[q] Exit")
 
         choice = input("please choose a function(or q exit): ").strip()
@@ -92,13 +101,19 @@ def main():
     parser = argparse.ArgumentParser(description="Welcome to CCkit")
 
     parser.add_argument("--listall", action="store_true", help="List all available functions")
-    parser.add_argument("func", nargs="?", help = f"functions (available:{', '.join(CONFIG.keys())})")
-    parser.add_argument("extra", nargs=argparse.REMAINDER, help="parameters go to function scripts")
+    parser.add_argument("func", nargs="?", help=f"functions (available:{', '.join(CONFIG.keys())})")
+    parser.add_argument("extra", nargs=argparse.REMAINDER, help="parameters flow to function scripts")
 
     args = parser.parse_args()
 
     if args.listall:
-        print("\n".join(CONFIG.keys()))
+        print("Available functions:")
+        for func, info in CONFIG.items():
+            if isinstance(info, dict):
+                desc = info.get("desc", "")
+            else:
+                desc = ""
+            print(f"- {func}: {desc}")
         sys.exit(0)
     if not args.func:
         menu_mode()

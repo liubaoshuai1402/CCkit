@@ -1,7 +1,30 @@
 {
-    "M1001": "generate_strain.py",
-    "M1002": "generate_YSZ.py",
-    "A2001": "global_bond_analysis.py",
-    "A2002": "local_bond_analysis.py",
-    "clean": "clean_data.py"
+    "M1001": {
+        "script": "generate_strain.py",
+        "desc": "Generate strain structures"
+    },
+    "M1002": {
+        "script": "generate_YSZ.py",
+        "desc": "Generate YSZ type structures"
+    },
+    "M1003": {
+        "script": "generate_vacancy.py",
+        "desc": "Generate vacancy structures"
+    },
+    "M1004": {
+        "script": "generate_substitute.py",
+        "desc": "Generate substitute structures"
+    },
+    "M1005": {
+        "script": "generate_sp.py",
+        "desc": "Generate singlepoint structure"
+    },
+    "A2001": {
+        "script": "global_bond_analysis.py",
+        "desc": "Perform global bond analysis"
+    },
+    "A2002": {
+        "script": "local_bond_analysis.py",
+        "desc": "Perform local bond analysis"
+    }
 }

@@ -45,7 +45,7 @@ def main():
     prim = load_structure(args.input)
     random.seed(args.seed)
     #generate M structures with vacancy
-    vacancy_structures = [vacancy_atoms(prim, args.elementA, args.N, seed) for _ in range(M)]
+    vacancy_structures = [vacancy_atoms(prim, args.elementA, args.N) for _ in range(args.M)]
 
     write(args.output,vacancy_structures)
 

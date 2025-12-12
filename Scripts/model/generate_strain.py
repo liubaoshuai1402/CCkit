@@ -47,9 +47,9 @@ def main():
     
     parser.add_argument("--rattle", type=float, default=0.02, help="rattle amplitude (default 0.02): larger rattle, larger displacements")
     parser.add_argument("--iter", type=int, default=10, help="int number of Monte Carlo cycles (default 10): larger iter, larger displacements")
-    parser.add_argument("--dmin", type=float, default=0.7, help="Min interatomic distance allowed: smaller dmin, closer the atoms are allowed to get")
-    parser.add_argument("--seed", type=int, default=1214, help="Random seed")
-    parser.add_argument("-o", "--output", type=str, default="rattled_strain_structures.xyz", help="Output file")
+    parser.add_argument("--dmin", type=float, default=0.7, help="Min interatomic distance allowed: smaller dmin, closer the atoms are allowed to get, default = 0.7")
+    parser.add_argument("--seed", type=int, default=1214, help="Random seed,default = 1214")
+    parser.add_argument("-o", "--output", type=str, default="rattled_strain_structures.xyz", help="Output file,default: rattled_strain_structures.xyz")
 
     args = parser.parse_args()
 

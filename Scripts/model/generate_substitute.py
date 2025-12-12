@@ -51,7 +51,7 @@ def main():
     seeds = generate_seeds(args.M, args.seed)
 
     # --- Generate all substituted structures ---
-    substituted = [substitute_atoms(prim, args.elementA, args.elementB, args.N) for _ in range(M)]
+    substituted = [substitute_atoms(prim, args.elementA, args.elementB, args.N) for _ in range(args.M)]
 
     # --- Write output ---
     write(args.output, substituted)
