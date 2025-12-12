@@ -2,7 +2,7 @@
 
 # CCkit
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/clice-io/clice)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/clice-io/clice)
 
 
 
