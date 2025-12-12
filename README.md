@@ -1,4 +1,9 @@
 # CCkit
+
+[![License: MIT](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/License-MIT-blue.svg)](./LICENSE)
+
+![Ask DeepWiki](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/badge.svg)
+
 Tools for modeling and analysis of crystal calculation (DFT and MD). 
 
 ## Features
