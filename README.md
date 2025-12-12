@@ -9,6 +9,12 @@ Tools for modeling and analysis of crystal calculation (DFT and MD).
 
 ## Installation
 
+#### Requirement
+
+In CCkit, different Functions need different modules. If these modules are not in your python environment, CCkit will report errors.
+
+In general, `ase`,`pymatgen`,`matplotlib` are often used. I recommend CCkit user to install them in your python environment.
+
 #### Linux user
 
 ---
@@ -31,7 +37,7 @@ To install `CCkit`, follow these steps:
    source ${CCkit_PATHS}/CCkit_completion.sh
    ```
 
-   > [!important]
+   > [!IMPORTANT]
    >
    > `/your_dir_of_CCkit` should be an actual directory path! 
    >
@@ -150,15 +156,15 @@ Finally, `M1001` will generate how many structures ?
 
 Answer: (the numbers of primitive structure) * (10+10) * 2
 
-> **Important** 
+> [!IMPORTANT]
 >
-> Of cause, you should carefully choose suitable rattle details for your own system !!!
+> Of cause, you should carefully choose suitable rattle details for your own system!!!
 
 The prototype of this code is here: [Structure generation and NEP training](https://calorine.materialsmodeling.org/get_started/generate_training_structures_and_training.html)
 
 ##### Function M1002
 
-This script (generate_YSZ.py) can substiture element A by element B and generate vacancies simultaneously. (YSZ is a classical example)
+This script (generate_YSZ.py) can substitute element A by element B and generate vacancies simultaneously. (YSZ is a classical example)
 
 ```
 (dpdata) PS D:\Github_repositories\CCkit> CCkit M1002 -h
