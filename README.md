@@ -1,6 +1,6 @@
 # CCkit
 
-[![License: MIT](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/License-MIT-blue.svg)](./LICENSE)
+![License: MIT](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/License-MIT-blue.svg)
 
 ![Ask DeepWiki](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/badge.svg)
 
