@@ -1,8 +1,10 @@
 # CCkit
 
-![License: MIT](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/License-MIT-blue.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-![Ask DeepWiki](https://xiaoxiaobuaigugujiao.oss-cn-beijing.aliyuncs.com/img/badge.svg)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/clice-io/clice)
+
+
 
 Tools for modeling and analysis of crystal calculation (DFT and MD). 
 
