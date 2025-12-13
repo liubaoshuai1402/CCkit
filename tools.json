@@ -26,5 +26,13 @@
     "A2002": {
         "script": "local_bond_analysis.py",
         "desc": "Perform local bond analysis"
+    },
+    "A2003": {
+        "script": "dft_to_nep.py",
+        "desc": "add all your OUTCARs into one xyz for NEP"
+    },
+    "A2004": {
+        "script": "count_H_state.py",
+        "desc": "Count the states of H atoms in structures"
     }
 }

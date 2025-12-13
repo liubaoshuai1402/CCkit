@@ -8,7 +8,7 @@ import pathlib
 import shlex
 import traceback
 
-# ====== 1. 加载配置文件 ======
+# ====== load toos.json ======
 def load_config():
     config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools.json")
     if not os.path.exists(config_file):
@@ -19,11 +19,11 @@ def load_config():
 
 CONFIG = load_config()
 
-# ====== 2. 查找功能脚本（支持环境变量 + 递归搜索） ======
+# ====== find function script ======
 def find_script(script_name):
     env_paths = os.environ.get("CCkit_PATHS", "")
     if not env_paths:
-        raise RuntimeError("请先设置环境变量 CCkit_PATHS,指向软件安装目录")
+        raise RuntimeError("please set CCkit_PATHS")
 
     search_dirs = env_paths.split(os.pathsep)
 
@@ -36,17 +36,15 @@ def find_script(script_name):
                 return str(path.resolve())
 
     raise FileNotFoundError(
-        f"找不到脚本 {script_name}\n"
-        f"请确认 {env_paths} 下存在此文件"
+        f"fail to find {script_name}\n"
     )
 
-# ====== 3. 执行功能脚本（参数透传） ======
+# ====== run function script ======
 def run_command(func, extra_args):
     if func not in CONFIG:
-        print(f"未知功能：{func}")
+        print(f"unknown function: {func}")
         return
 
-    # 兼容新版 JSON
     info = CONFIG[func]
     if isinstance(info, dict):
         script_name = info.get("script")
@@ -56,7 +54,7 @@ def run_command(func, extra_args):
     try:
         script_path = find_script(script_name)
     except Exception as e:
-        print(f"查找脚本失败：{e}")
+        print(f"fail to find script: {e}")
         return
 
     cmd = [sys.executable, script_path] + (extra_args or [])
@@ -73,7 +71,7 @@ def run_command(func, extra_args):
         print("An unexpected error occurred while running the script:")
         traceback.print_exc()
 
-# ====== 4. 菜单模式（支持输入额外参数） ======
+# ====== menu mode ======
 def menu_mode():
     while True:
         print("\n====== Functions ======")
@@ -96,7 +94,7 @@ def menu_mode():
         else:
             print("Invalid choice")
 
-# ====== 5. 主入口 ======
+# ====== mian() ======
 def main():
     parser = argparse.ArgumentParser(description="Welcome to CCkit")
 
