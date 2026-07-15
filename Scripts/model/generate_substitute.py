@@ -6,8 +6,8 @@ def load_structure(filename):
     """Read structure file into ASE Atoms."""
     return read(filename)
 
-def substitute_atoms(prim, elementA, elementB, N, seed):
-    """Generate one substituted structure using a given seed."""
+def substitute_atoms(prim, elementA, elementB, N):
+    """Generate one substituted structure."""
     struct = prim.copy()
 
     # Locate atoms of type A
@@ -46,9 +46,6 @@ def main():
     # --- Load structure ---
     prim = load_structure(args.input)
     random.seed(args.seed)
-
-    # --- Generate random seeds ---
-    seeds = generate_seeds(args.M, args.seed)
 
     # --- Generate all substituted structures ---
     substituted = [substitute_atoms(prim, args.elementA, args.elementB, args.N) for _ in range(args.M)]

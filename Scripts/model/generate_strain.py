@@ -31,9 +31,9 @@ def rattled_strain_structure(prim, strain_limt, N1, N2, M, rattle_std, n_iter, d
         strain_structures.append(apply_uniaxial_strain(prim, strain_limt))
     for it in range(N2): 
         strain_structures.append(apply_affine_strain(prim, strain_limt))
-  
-    for at in strain_structures:
-        rattled_strain_structures.extend(generate_mc_rattled_structures(atoms=at, n_structures=M, rattle_std=rattle_std, seed=np.random.randint(1, 10**9), n_iter=n_iter, d_min=d_min))
+    seeds = np.random.randint(1, 10**9, size=len(strain_structures))
+    for at, seed in zip(strain_structures, seeds):
+        rattled_strain_structures.extend(generate_mc_rattled_structures(atoms=at, n_structures=M, rattle_std=rattle_std, seed=seed, n_iter=n_iter, d_min=d_min))
     return rattled_strain_structures
 
 def main():

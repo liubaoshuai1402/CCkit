@@ -16,7 +16,7 @@
         "desc": "Generate substitute structures"
     },
     "M1005": {
-        "script": "generate_sp.py",
+        "script": "generate_singlepoint.py",
         "desc": "Generate singlepoint structure"
     },
     "M1006": {
@@ -46,5 +46,29 @@
     "A2005": {
         "script": "split_dataset.py",
         "desc": "Split dataset into train, valid, test sets"
+    },
+    "A2006": {
+        "script": "count_H_vacancy.py",
+        "desc": "Count interstitial H atoms in structures"
+    },
+    "A2007": {
+        "script": "cluster_connectivity.py",
+        "desc": "Perform cluster analysis on MD trajectories"
+    },
+    "A2008": {
+        "script": "cluster_size_numbers.py",
+        "desc": "Calculate cluster size numbers from MD trajectories"
+    },
+    "A2009": {
+        "script": "find_vacancy.py",
+        "desc": "Find oxygen vacancies in structures"
+    },
+    "G3001": {
+        "script": "average_cell.py",
+        "desc": "Average cell from NPT simulation using thermo.out"
+    },
+    "G3002": {
+        "script": "average_stress.py",
+        "desc": "Average stress from NPT simulation using thermo.out"
     }
 }
