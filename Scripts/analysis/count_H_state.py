@@ -1,3 +1,21 @@
+# -----------------------------------------------------------------------------
+# Count hydrogen states in an atomistic trajectory.
+#
+# Hydrogen atoms are classified into three categories:
+#   (1) Bonded H:
+#       H atoms bonded to O atoms within the specified O-H cutoff.
+#   (2) Interstitial H:
+#       H atoms without an O-H bond and without any neighboring atoms
+#       within the specified search radius.
+#   (3) Transitive H:
+#       H atoms without an O-H bond but with neighboring atoms within
+#       the specified search radius, corresponding to a transient
+#       (migrating) hydrogen state.
+#
+# The script analyzes every frame in the trajectory and outputs:
+#   - count_H_state.txt      : Hydrogen state counts for each frame.
+#   - count_H_state_avg.txt  : Average numbers of each hydrogen state.
+# -----------------------------------------------------------------------------
 import numpy as np
 from ase.io import read 
 from pymatgen.io.ase import AseAtomsAdaptor

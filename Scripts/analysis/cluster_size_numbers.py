@@ -97,7 +97,7 @@ def main():
         args.cutoff
     )
 
-    with open("cluster_statistics.txt","w",encoding="utf-8") as f:
+    with open(f"cluster_statistics_{args.cutoff}.txt","w",encoding="utf-8") as f:
         def log(s=""):
             print(s)
             f.write(s+"\n")

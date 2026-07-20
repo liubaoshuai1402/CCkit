@@ -27,6 +27,10 @@
         "script": "generate_supercell.py",
         "desc": "Generate supercell"
     },
+    "M1008": {
+        "script": "remove_atom.py",
+        "desc": "Remove atoms from structure"
+    },
     "A2001": {
         "script": "global_bond_analysis.py",
         "desc": "Perform global bond analysis"
@@ -70,5 +74,17 @@
     "G3002": {
         "script": "average_stress.py",
         "desc": "Average stress from NPT simulation using thermo.out"
+    },
+    "NEB001": {
+        "script": "nebmovie.py",
+        "desc": "Generate movie from NEB image directories"
+    },
+    "NEB002": {
+        "script": "nebalign.py",
+        "desc": "Align NEB images"
+    },
+    "NEB003": {
+        "script": "nebmake.py",
+        "desc": "Generate NEB images"
     }
 }
