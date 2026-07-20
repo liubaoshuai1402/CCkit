@@ -1,79 +1,87 @@
 {
-    "M1001": {
+    "M001": {
         "script": "generate_strain.py",
         "desc": "Generate strain structures"
     },
-    "M1002": {
+    "M002": {
         "script": "generate_YSZ.py",
         "desc": "Generate YSZ type structures"
     },
-    "M1003": {
+    "M003": {
         "script": "generate_vacancy.py",
         "desc": "Generate vacancy structures"
     },
-    "M1004": {
+    "M004": {
         "script": "generate_substitute.py",
         "desc": "Generate substitute structures"
     },
-    "M1005": {
+    "M005": {
         "script": "generate_singlepoint.py",
         "desc": "Generate singlepoint structure"
     },
-    "M1006": {
+    "M006": {
         "script": "line_dimer.py",
         "desc": "add a dimer along a line defined by two atoms"
     },
-    "M1007": {
+    "M007": {
         "script": "generate_supercell.py",
         "desc": "Generate supercell"
     },
-    "M1008": {
+    "M008": {
         "script": "remove_atom.py",
         "desc": "Remove atoms from structure"
     },
-    "A2001": {
+    "A001": {
         "script": "global_bond_analysis.py",
         "desc": "Perform global bond analysis"
     },
-    "A2002": {
+    "A002": {
         "script": "local_bond_analysis.py",
         "desc": "Perform local bond analysis"
     },
-    "A2003": {
+    "A003": {
         "script": "dft_to_nep.py",
         "desc": "add all your OUTCARs into one xyz for NEP"
     },
-    "A2004": {
+    "A004": {
         "script": "count_H_state.py",
         "desc": "Count the states of H atoms in structures"
     },
-    "A2005": {
+    "A005": {
         "script": "split_dataset.py",
         "desc": "Split dataset into train, valid, test sets"
     },
-    "A2006": {
+    "A006": {
         "script": "count_H_vacancy.py",
         "desc": "Count interstitial H atoms in structures"
     },
-    "A2007": {
+    "A007": {
         "script": "cluster_connectivity.py",
         "desc": "Perform cluster analysis on MD trajectories"
     },
-    "A2008": {
+    "A008": {
         "script": "cluster_size_numbers.py",
         "desc": "Calculate cluster size numbers from MD trajectories"
     },
-    "A2009": {
+    "A009": {
         "script": "find_vacancy.py",
         "desc": "Find oxygen vacancies in structures"
     },
-    "G3001": {
+    "G001": {
         "script": "average_cell.py",
         "desc": "Average cell from NPT simulation using thermo.out"
     },
-    "G3002": {
+    "G002": {
         "script": "average_stress.py",
         "desc": "Average stress from NPT simulation using thermo.out"
+    },
+    "G003": {
+        "script": "nebDFTvsNEPplot.py",
+        "desc": "Plot DFT vs NEP energy barriers for NEB results"
+    },
+    "G004": {
+        "script": "eosDFTvsNEPplot.py",
+        "desc": "Plot DFT vs NEP energy for EOS results"
     },
     "NEB001": {
         "script": "nebmovie.py",
