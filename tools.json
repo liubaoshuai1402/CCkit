@@ -83,6 +83,10 @@
         "script": "eosDFTvsNEPplot.py",
         "desc": "Plot DFT vs NEP energy for EOS results"
     },
+    "G005": {
+        "script": "PrepareSP.py",
+        "desc": "Prepare single-point calculation structures"
+    },
     "NEB001": {
         "script": "nebmovie.py",
         "desc": "Generate movie from NEB image directories"
@@ -94,5 +98,9 @@
     "NEB003": {
         "script": "nebmake.py",
         "desc": "Generate NEB images"
+    },
+    "NEB004": {
+        "script": "PNGtoMP4.py",
+        "desc": "Convert Png to MP4"
     }
 }
