@@ -87,6 +87,10 @@
         "script": "PrepareSP.py",
         "desc": "Prepare single-point calculation structures"
     },
+    "G006": {
+        "script": "optNEP.py",
+        "desc": "Structure relaxation by NEP and calorine"
+    },
     "NEB001": {
         "script": "nebmovie.py",
         "desc": "Generate movie from NEB image directories"
@@ -102,5 +106,9 @@
     "NEB004": {
         "script": "PNGtoMP4.py",
         "desc": "Convert Png to MP4"
+    },
+    "catxyz": {
+        "script": "catxyz.py",
+        "desc": "cat xyz files into one"
     }
 }
