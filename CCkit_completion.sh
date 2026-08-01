@@ -16,7 +16,7 @@ _CCkit_completions() {
     # 第二个单词，补全功能函数
     if [[ $COMP_CWORD == 1 ]]; then
         if command -v CCkit >/dev/null 2>&1; then
-            cmds=$(CCkit --listall 2>/dev/null)
+            cmds=$(CCkit --listall 2>/dev/null | sed -n 's/^- \([^:]*\):.*/\1/p')
             COMPREPLY=( $(compgen -W "$cmds" -- "$cur") )
         fi
         return 0

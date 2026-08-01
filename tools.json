@@ -1,114 +1,126 @@
 {
-    "M001": {
+    "generate-strain": {
         "script": "generate_strain.py",
         "desc": "Generate strain structures"
     },
-    "M002": {
+    "generate-ysz": {
         "script": "generate_YSZ.py",
         "desc": "Generate YSZ type structures"
     },
-    "M003": {
+    "generate-vacancy": {
         "script": "generate_vacancy.py",
         "desc": "Generate vacancy structures"
     },
-    "M004": {
+    "generate-substitute": {
         "script": "generate_substitute.py",
         "desc": "Generate substitute structures"
     },
-    "M005": {
+    "generate-sol":{
+        "script": "generate_sol.py",
+        "desc": "Generate all possible solution structures"
+    },
+    "singlepoint": {
         "script": "generate_singlepoint.py",
         "desc": "Generate singlepoint structure"
     },
-    "M006": {
+    "line-dimer": {
         "script": "line_dimer.py",
         "desc": "add a dimer along a line defined by two atoms"
     },
-    "M007": {
+    "supercell": {
         "script": "generate_supercell.py",
         "desc": "Generate supercell"
     },
-    "M008": {
+    "remove-atoms": {
         "script": "remove_atom.py",
         "desc": "Remove atoms from structure"
     },
-    "A001": {
+    "global-bond": {
         "script": "global_bond_analysis.py",
         "desc": "Perform global bond analysis"
     },
-    "A002": {
+    "local-bond": {
         "script": "local_bond_analysis.py",
         "desc": "Perform local bond analysis"
     },
-    "A003": {
+    "dft-to-nep": {
         "script": "dft_to_nep.py",
         "desc": "add all your OUTCARs into one xyz for NEP"
     },
-    "A004": {
+    "hydrogen-state": {
         "script": "count_H_state.py",
         "desc": "Count the states of H atoms in structures"
     },
-    "A005": {
+    "split-dataset": {
         "script": "split_dataset.py",
         "desc": "Split dataset into train, valid, test sets"
     },
-    "A006": {
+    "hydrogen-vacancy": {
         "script": "count_H_vacancy.py",
         "desc": "Count interstitial H atoms in structures"
     },
-    "A007": {
+    "cluster-connect": {
         "script": "cluster_connectivity.py",
         "desc": "Perform cluster analysis on MD trajectories"
     },
-    "A008": {
+    "cluster-size": {
         "script": "cluster_size_numbers.py",
         "desc": "Calculate cluster size numbers from MD trajectories"
     },
-    "A009": {
+    "find-vacancy": {
         "script": "find_vacancy.py",
-        "desc": "Find oxygen vacancies in structures"
+        "desc": "Locate oxygen vacancies using reference-site matching or density deficits"
     },
-    "G001": {
+    "average-cell": {
         "script": "average_cell.py",
         "desc": "Average cell from NPT simulation using thermo.out"
     },
-    "G002": {
+    "average-stress": {
         "script": "average_stress.py",
         "desc": "Average stress from NPT simulation using thermo.out"
     },
-    "G003": {
+    "compare-neb": {
         "script": "nebDFTvsNEPplot.py",
         "desc": "Plot DFT vs NEP energy barriers for NEB results"
     },
-    "G004": {
+    "compare-eos": {
         "script": "eosDFTvsNEPplot.py",
         "desc": "Plot DFT vs NEP energy for EOS results"
     },
-    "G005": {
+    "prepare-singlepoint": {
         "script": "PrepareSP.py",
         "desc": "Prepare single-point calculation structures"
     },
-    "G006": {
+    "relax-nep": {
         "script": "optNEP.py",
         "desc": "Structure relaxation by NEP and calorine"
     },
-    "NEB001": {
+    "config-type": {
+        "script": "add_config_type.py",
+        "desc": "Add a Config_type label to structures or trajectories"
+    },
+    "neb-movie": {
         "script": "nebmovie.py",
         "desc": "Generate movie from NEB image directories"
     },
-    "NEB002": {
+    "align-neb": {
         "script": "nebalign.py",
         "desc": "Align NEB images"
     },
-    "NEB003": {
+    "make-neb": {
         "script": "nebmake.py",
         "desc": "Generate NEB images"
     },
-    "NEB004": {
+    "png-to-mp4": {
         "script": "PNGtoMP4.py",
         "desc": "Convert Png to MP4"
     },
-    "catxyz": {
+    "merge-xyz": {
         "script": "catxyz.py",
+        "desc": "cat xyz files into one"
+    },
+    "generate-interface": {
+        "script": "generate_interface.py",
         "desc": "cat xyz files into one"
     }
 }

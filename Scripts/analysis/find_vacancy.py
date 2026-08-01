@@ -1,189 +1,278 @@
-import numpy as np
+"""Locate oxygen-vacancy coordinates in a defective structure.
+
+By default, the script maps the reference oxygen density into the current cell,
+subtracts the current oxygen density, and reports the strongest density deficits.
+The resulting coordinates belong to the current (defective) structure.
+"""
+
 import argparse
+import csv
+from concurrent.futures import ProcessPoolExecutor
+
+import numpy as np
+from ase import Atoms
+from ase.geometry import find_mic
 from ase.io import read, write
-from scipy.ndimage import maximum_filter
-from multiprocessing import Pool, cpu_count
+from scipy.optimize import linear_sum_assignment
 
 
-def load_structure(filename):
-    return read(filename, index=0)
+_WORKER_REFERENCE = None
+_WORKER_ARGUMENTS = None
+_WORKER_REFERENCE_COUNT = None
 
 
-def gaussian_density(atoms, element, spacing, sigma, ref_cell):
-
-    cell = ref_cell
-
-    length = np.linalg.norm(cell, axis=1)
-
-    ngrid = np.ceil(length / spacing).astype(int)
-
-    rho = np.zeros(ngrid)
-
-    inv_ref = np.linalg.inv(cell)
-    inv_atom = np.linalg.inv(atoms.cell.array)
-
-    symbols = np.array(atoms.get_chemical_symbols())
-
-    positions = atoms.positions[symbols == element]
-
-    cutoff = 3 * sigma
-
-    # 每个方向不同网格尺寸
-    grid_spacing = length / ngrid
-
-    radius = np.ceil(cutoff / grid_spacing).astype(int)
-
-    for pos in positions:
-        # 当前结构 -> 分数坐标
-        frac = pos @ inv_atom
-
-        frac %= 1.0
-
-        # 映射到reference晶胞
-        pos = frac @ cell
-
-        center = np.floor(frac * ngrid).astype(int)
-
-        for i in range(-radius[0], radius[0] + 1):
-            for j in range(-radius[1], radius[1] + 1):
-                for k in range(-radius[2], radius[2] + 1):
-                    idx = center + np.array([i, j, k])
-
-                    idx %= ngrid
-
-                    frac_grid = idx / ngrid
-
-                    grid_pos = frac_grid @ cell
-
-                    d = grid_pos - pos
-
-                    # minimum image
-                    d = (d - np.round(d @ inv_ref)) @ cell
-
-                    r2 = np.dot(d, d)
-
-                    if r2 < cutoff**2:
-                        rho[tuple(idx)] += np.exp(-r2 / (2 * sigma * sigma))
-
-    return rho
+def element_positions(atoms, element):
+    """Return Cartesian positions of one element, plus its wrapped fractions."""
+    symbols = np.asarray(atoms.get_chemical_symbols())
+    indices = np.flatnonzero(symbols == element)
+    return atoms.positions[indices], atoms.get_scaled_positions(wrap=True)[indices]
 
 
-def find_vacancies(rho_ref, rho_def, ref_cell, nvac, min_dist):
+def mic_distances(first, second, cell, pbc):
+    """Pairwise minimum-image distances from ``first`` to ``second``."""
+    vectors = second[None, :, :] - first[:, None, :]
+    _, distances = find_mic(vectors.reshape(-1, 3), cell, pbc=pbc)
+    return distances.reshape(len(first), len(second))
 
-    deficit = rho_ref - rho_def
 
-    peaks = deficit == maximum_filter(deficit, size=5)
+def wigner_seitz_vacancies(reference, structure, element, tolerance):
+    """Find unoccupied reference sites using periodic one-to-one assignment."""
+    ref_positions, ref_fractional = element_positions(reference, element)
+    _, actual_fractional = element_positions(structure, element)
 
-    ids = np.argwhere(peaks)
+    if len(ref_positions) == 0:
+        raise ValueError(f"Reference structure contains no {element!r} atoms")
 
-    values = deficit[peaks]
+    # Fractional coordinates make uniform cell expansion/contraction an affine map.
+    actual_in_reference_cell = actual_fractional @ reference.cell.array
+    occupied = np.zeros(len(ref_positions), dtype=bool)
+    matched_distance = np.full(len(ref_positions), np.nan)
 
-    order = np.argsort(values)[::-1]
+    if len(actual_in_reference_cell):
+        distances = mic_distances(
+            ref_positions, actual_in_reference_cell, reference.cell, reference.pbc
+        )
+        reference_indices, actual_indices = linear_sum_assignment(distances)
+        assigned_distances = distances[reference_indices, actual_indices]
+        matched_distance[reference_indices] = assigned_distances
+        occupied[reference_indices] = assigned_distances <= tolerance
 
-    cell = ref_cell
+    vacancy_indices = np.flatnonzero(~occupied)
+    return (
+        ref_positions[vacancy_indices],
+        ref_fractional[vacancy_indices],
+        matched_distance[vacancy_indices],
+    )
 
-    inv = np.linalg.inv(cell)
 
-    ngrid = np.array(deficit.shape)
+def gaussian_density(fractional_positions, cell, spacing, sigma):
+    """Build periodic Gaussian density using CIC deposition and FFT convolution."""
+    lengths = np.linalg.norm(cell, axis=1)
+    shape = np.maximum(np.ceil(lengths / spacing).astype(int), 1)
+    occupancy = np.zeros(shape, dtype=float)
 
-    vacancies = []
+    # Cloud-in-cell deposition places each atom on its eight surrounding grid
+    # points. It is vectorized and avoids the old atom-by-atom 3-D stencil loop.
+    scaled = (fractional_positions % 1.0) * shape
+    lower = np.floor(scaled).astype(int)
+    remainder = scaled - lower
+    for offset in np.ndindex(2, 2, 2):
+        offset = np.asarray(offset)
+        weights = np.prod(np.where(offset, remainder, 1.0 - remainder), axis=1)
+        indices = (lower + offset) % shape
+        np.add.at(occupancy, tuple(indices.T), weights)
 
-    for idx in ids[order]:
-        frac = idx / ngrid
+    # In reciprocal space a Gaussian convolution is multiplication by
+    # exp(-sigma^2 |k|^2 / 2). This remains valid for triclinic cells because
+    # reciprocal vectors are built from the full cell matrix.
+    modes = np.meshgrid(
+        np.fft.fftfreq(shape[0]) * shape[0],
+        np.fft.fftfreq(shape[1]) * shape[1],
+        np.fft.rfftfreq(shape[2]) * shape[2],
+        indexing="ij",
+    )
+    reciprocal_modes = np.stack(modes, axis=-1) @ np.linalg.inv(cell)
+    wavevector_squared = (2 * np.pi) ** 2 * np.sum(reciprocal_modes**2, axis=-1)
+    gaussian_kernel = np.exp(-0.5 * sigma**2 * wavevector_squared)
+    return np.fft.irfftn(
+        np.fft.rfftn(occupancy) * gaussian_kernel, s=shape
+    ).real
 
-        pos = frac @ cell
 
-        keep = True
+def strongest_separated_peaks(deficit, cell, pbc, number, minimum_distance):
+    """Select separated positive deficits without a costly 3-D maximum filter."""
+    flat = deficit.ravel()
+    candidate_count = min(flat.size, max(4096, number * 256))
 
-        for v in vacancies:
-            d = pos - v
-
-            d = (d - np.round(d @ inv)) @ cell
-
-            if np.linalg.norm(d) < min_dist:
-                keep = False
-
+    while True:
+        candidates = np.argpartition(flat, -candidate_count)[-candidate_count:]
+        candidates = candidates[np.argsort(flat[candidates])[::-1]]
+        positions = []
+        fractions = []
+        for candidate in candidates:
+            if flat[candidate] <= 0:
                 break
-
-        if keep:
-            vacancies.append(pos)
-
-        if len(vacancies) >= nvac:
-            break
-
-    return np.array(vacancies)
-
-
-def insert_atoms(atoms, positions, symbol):
-
-    atoms = atoms.copy()
-
-    for p in positions:
-        atoms.append(symbol)
-
-        atoms.positions[-1] = p
-
-    return atoms
+            index = np.asarray(np.unravel_index(candidate, deficit.shape))
+            fractional = index / np.asarray(deficit.shape)
+            position = fractional @ cell
+            if positions:
+                distance = mic_distances(
+                    np.asarray(positions), np.asarray([position]), cell, pbc
+                ).min()
+                if distance < minimum_distance:
+                    continue
+            positions.append(position)
+            fractions.append(fractional)
+            if len(positions) == number:
+                return np.asarray(positions), np.asarray(fractions)
+        if candidate_count == flat.size:
+            return np.asarray(positions), np.asarray(fractions)
+        candidate_count = min(flat.size, candidate_count * 2)
 
 
-def process_frame(data):
+def density_vacancies(reference, structure, element, number, spacing, sigma, minimum_distance):
+    """Locate density deficits directly in the current structure's cell."""
+    _, reference_fractional = element_positions(reference, element)
+    _, actual_fractional = element_positions(structure, element)
+    if len(reference_fractional) == 0:
+        raise ValueError(f"Reference structure contains no {element!r} atoms")
 
-    index, atoms, rho_ref, ref_cell, args = data
+    actual_density = gaussian_density(
+        actual_fractional, structure.cell.array, spacing, sigma
+    )
+    reference_density = gaussian_density(
+        reference_fractional, structure.cell.array, spacing, sigma
+    )
+    deficit = reference_density - actual_density
+    positions, fractions = strongest_separated_peaks(
+        deficit, structure.cell, structure.pbc, number, minimum_distance
+    )
+    return positions, fractions, np.full(len(positions), np.nan)
 
-    rho_def = gaussian_density(atoms, args.element, args.spacing, args.sigma, ref_cell)
 
-    vac = find_vacancies(rho_ref, rho_def, ref_cell, args.nvac, args.min_dist)
+def add_markers(atoms, positions, marker):
+    """Return a copy of ``atoms`` with vacancy positions added as dummy atoms."""
+    marked = atoms.copy()
+    if len(positions) and marker.lower() != "none":
+        marked += Atoms(symbols=[marker] * len(positions), positions=positions)
+        marked.set_cell(atoms.cell)
+        marked.pbc = atoms.pbc
+    return marked
 
-    print("Frame", index, "vacancy:", vac)
 
-    return insert_atoms(atoms, vac, args.symbol)
+def analyse_frame(frame, atoms, reference, args, reference_element_count):
+    """Analyse one frame; kept top-level so it can run in worker processes."""
+    _, actual_element = element_positions(atoms, args.element)
+    if args.method == "ws":
+        positions, fractions, distances = wigner_seitz_vacancies(
+            reference, atoms, args.element, args.tolerance
+        )
+    else:
+        number = args.number
+        if number is None:
+            number = max(reference_element_count - len(actual_element), 1)
+        positions, fractions, distances = density_vacancies(
+            reference, atoms, args.element, number, args.spacing, args.sigma,
+            args.minimum_distance,
+        )
+    return frame, atoms, positions, fractions, distances
+
+
+def initialise_worker(reference, args, reference_element_count):
+    """Store shared analysis inputs once per process, avoiding per-frame copies."""
+    global _WORKER_REFERENCE, _WORKER_ARGUMENTS, _WORKER_REFERENCE_COUNT
+    _WORKER_REFERENCE = reference
+    _WORKER_ARGUMENTS = args
+    _WORKER_REFERENCE_COUNT = reference_element_count
+
+
+def analyse_frame_worker(task):
+    frame, atoms = task
+    return analyse_frame(
+        frame, atoms, _WORKER_REFERENCE, _WORKER_ARGUMENTS, _WORKER_REFERENCE_COUNT
+    )
 
 
 def main():
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("reference")
-
-    parser.add_argument("input")
-
-    parser.add_argument("--output", default="vacancy.xyz")
-
-    parser.add_argument("--element", default="O")
-
-    parser.add_argument("--symbol", default="X")
-
-    parser.add_argument("--nvac", type=int, default=1)
-
-    parser.add_argument("--spacing", type=float, default=0.2)
-
-    parser.add_argument("--sigma", type=float, default=0.5)
-
-    parser.add_argument("--min_dist", type=float, default=2.0)
-
-    parser.add_argument("--cores", type=int, default=cpu_count())
-
+    parser = argparse.ArgumentParser(
+        description="Locate oxygen-vacancy coordinates in a structure/trajectory."
+    )
+    parser.add_argument("reference", help="Defect-free reference structure")
+    parser.add_argument("input", help="Defective structure or ASE-readable trajectory")
+    parser.add_argument("--element", default="O", help="Element vacancy to locate (default: O)")
+    parser.add_argument(
+        "--method", choices=("density", "ws"), default="density",
+        help="density: current-cell Gaussian density deficit (default); ws: reference-site matching",
+    )
+    parser.add_argument(
+        "--tolerance", type=float, default=1.2,
+        help="Maximum reference-site assignment distance in Angstrom for ws (default: 1.2)",
+    )
+    parser.add_argument(
+        "--number", type=int,
+        help="Number of density-deficit peaks to retain (default: O count difference)",
+    )
+    parser.add_argument("--spacing", type=float, default=0.2, help="Density-grid spacing in Angstrom")
+    parser.add_argument("--sigma", type=float, default=0.5, help="Gaussian width in Angstrom")
+    parser.add_argument("--minimum-distance", type=float, default=2.0,help="Minimum separation of density peaks in Angstrom")
+    parser.add_argument("--cores", type=int, default=1,help="Worker processes for independent trajectory frames (default: 1)")
+    parser.add_argument("--marker", default="X", help="Dummy element marking vacancies; use 'none' to omit")
+    parser.add_argument("-o", "--output", default="oxygen_vacancies.extxyz", help="Marked trajectory output")
+    parser.add_argument("--report", default="oxygen_vacancies.csv", help="Vacancy coordinate report")
     args = parser.parse_args()
 
-    ref = load_structure(args.reference)
+    reference = read(args.reference, index=0)
+    trajectory = read(args.input, index=":")
+    if not trajectory:
+        raise ValueError("No structures were read from the input file")
+    if args.cores < 1:
+        raise ValueError("--cores must be at least 1")
 
-    ref_cell = ref.cell.array
+    _, reference_oxygen = element_positions(reference, args.element)
+    marked_frames = []
+    report_rows = []
 
-    traj = read(args.input, index=":")
+    tasks = list(enumerate(trajectory))
+    if args.cores > 1 and len(tasks) > 1:
+        with ProcessPoolExecutor(
+            max_workers=args.cores,
+            initializer=initialise_worker,
+            initargs=(reference, args, len(reference_oxygen)),
+        ) as executor:
+            analyses = list(executor.map(analyse_frame_worker, tasks))
+    else:
+        analyses = [
+            analyse_frame(frame, atoms, reference, args, len(reference_oxygen))
+            for frame, atoms in tasks
+        ]
 
-    print("Frames:", len(traj))
+    for frame, atoms, positions, fractions, distances in analyses:
+        if args.method == "density":
+            # Density positions are already in the current structure's cell.
+            current_positions = positions
+        else:
+            # Wigner-Seitz positions are reference sites, so map them to the
+            # current cell only for direct visualisation.
+            current_positions = fractions @ atoms.cell.array
+        marked_frames.append(add_markers(atoms, current_positions, args.marker))
+        print(f"Frame {frame}: {len(positions)} {args.element} vacancy candidate(s)")
+        for site, (position, fractional, distance) in enumerate(
+            zip(current_positions, fractions, distances), start=1
+        ):
+            report_rows.append(
+                [frame, site, args.element, *fractional, *position, distance, args.method]
+            )
 
-    rho_ref = gaussian_density(ref, args.element, args.spacing, args.sigma, ref_cell)
-
-    tasks = []
-
-    for i, atoms in enumerate(traj):
-        tasks.append((i, atoms, rho_ref, ref_cell, args))
-
-    with Pool(args.cores) as pool:
-        results = pool.map(process_frame, tasks)
-
-    write(args.output, results, format="extxyz")
+    write(args.output, marked_frames, format="extxyz")
+    with open(args.report, "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            "frame", "site", "element", "fx", "fy", "fz", "x_A", "y_A", "z_A",
+            "assignment_distance_A", "method",
+        ])
+        writer.writerows(report_rows)
+    print(f"Saved marked structures: {args.output}")
+    print(f"Saved vacancy coordinates: {args.report}")
 
 
 if __name__ == "__main__":
