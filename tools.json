@@ -122,5 +122,9 @@
     "generate-interface": {
         "script": "generate_interface.py",
         "desc": "cat xyz files into one"
+    },
+    "reset-vasp": {
+        "script": "reset_vasp.py",
+        "desc": "Reset VASP input files"
     }
 }
