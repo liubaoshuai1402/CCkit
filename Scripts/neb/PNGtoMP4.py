@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# CCkit 功能说明：
+# 将按序排列的 PNG 图片转换为 MP4 视频。
 import imageio.v2 as imageio
 import glob
 import os

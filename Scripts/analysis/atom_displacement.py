@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 计算两个结构或轨迹之间逐原子的位移，用于比较结构变化。
 from ase.io import read,write
 import argparse
 

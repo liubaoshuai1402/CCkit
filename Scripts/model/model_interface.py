@@ -1,3 +1,7 @@
+# CCkit 功能说明：
+# 根据晶面、层厚和界面间距构建相干界面模型。
+#用于构建界面模型
+#可以指定晶面，厚度，界面间距离
 from pathlib import Path
 import argparse
 import numpy as np
@@ -24,6 +28,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate coherent interface")
 
     parser.add_argument("--subs", required=True, help="substrate structure")
+
     parser.add_argument("--film", required=True, help="film structure")
 
     parser.add_argument("--sm", nargs=3, type=int, required=True)
@@ -33,6 +38,8 @@ def main():
     parser.add_argument("--st", type=int, default=1)
 
     parser.add_argument("--ft", type=int, default=1)
+
+    parser.add_argument("--gap", type=float, default=2.5)
 
     parser.add_argument("--shift", nargs=2, type=float, default=[0, 0])
 
@@ -87,7 +94,7 @@ def main():
         interfaces = list(
             builder.get_interfaces(
                 termination=term,
-                gap=2.0,
+                gap=args.gap,
                 vacuum_over_film=20,
                 film_thickness=args.ft,
                 substrate_thickness=args.st,

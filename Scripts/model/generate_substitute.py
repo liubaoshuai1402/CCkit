@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 随机将结构中的指定元素替换为另一种元素，生成替位结构。
 import argparse
 import random
 from ase.io import read, write

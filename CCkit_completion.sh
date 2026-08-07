@@ -1,4 +1,5 @@
 # CCkit Bash/Zsh 补全脚本
+# CCkit 功能说明：为 CCkit 命令及 tools.json 中的功能名提供命令补全。
 # 使用方法: source /path/to/CCkit_completion.sh
 
 _CCkit_completions() {

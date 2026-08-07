@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 根据 GPUMD 的 NPT 输出计算平均晶胞参数。
 from ase.io import read,write
 import numpy as np
 import os

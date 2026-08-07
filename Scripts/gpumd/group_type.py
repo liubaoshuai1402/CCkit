@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 按照原子类型对结构或轨迹进行分组并输出分组结果。
 #group according to atom type
 from ase.io import read,write
 import numpy as np

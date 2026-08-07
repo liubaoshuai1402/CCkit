@@ -19,8 +19,8 @@
         "script": "generate_sol.py",
         "desc": "Generate all possible solution structures"
     },
-    "singlepoint": {
-        "script": "generate_singlepoint.py",
+    "convert-xyz-sp": {
+        "script": "convert_xyz_singlepoint.py",
         "desc": "Generate singlepoint structure"
     },
     "line-dimer": {
@@ -31,9 +31,17 @@
         "script": "generate_supercell.py",
         "desc": "Generate supercell"
     },
-    "remove-atoms": {
+    "add-atom": {
+        "script": "add_atom.py",
+        "desc": "Add atoms to structure"
+    },
+    "remove-atom": {
         "script": "remove_atom.py",
         "desc": "Remove atoms from structure"
+    },
+    "substitute-atom": {
+        "script": "substitute_atom.py",
+        "desc": "Substitute atoms in structure"
     },
     "global-bond": {
         "script": "global_bond_analysis.py",
@@ -87,7 +95,7 @@
         "script": "eosDFTvsNEPplot.py",
         "desc": "Plot DFT vs NEP energy for EOS results"
     },
-    "prepare-singlepoint": {
+    "prepare-sp": {
         "script": "PrepareSP.py",
         "desc": "Prepare single-point calculation structures"
     },
@@ -119,12 +127,36 @@
         "script": "catxyz.py",
         "desc": "cat xyz files into one"
     },
-    "generate-interface": {
-        "script": "generate_interface.py",
-        "desc": "cat xyz files into one"
+    "model-surface": {
+        "script": "model_surface.py",
+        "desc": "Generate surface structures"
+    },
+    "model-surface-ase": {
+        "script": "model_surface_ase.py",
+        "desc": "Generate surface structures using ASE"
+    },
+    "model-interface": {
+        "script": "model_interface.py",
+        "desc": "model interface structures"
     },
     "reset-vasp": {
         "script": "reset_vasp.py",
         "desc": "Reset VASP input files"
+    },
+    "compare-vasp-ef": {
+        "script": "compare_ef.py",
+        "desc": "Compare energy and force results from VASP calculations"
+    },
+    "move-crystal": {
+        "script": "move_crystal.py",
+        "desc": "Move selected atom to origin by translating whole structure"
+    },
+    "fix-surface": {
+        "script": "fix_surface.py",
+        "desc": "Fix atoms by fractional z range"
+    },
+    "sort-poscar": {
+        "script": "sort_poscar.py",
+        "desc": "Sort POSCAR by element type"
     }
 }

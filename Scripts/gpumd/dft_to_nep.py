@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 递归读取 VASP OUTCAR，并合并为 NEP 训练使用的 XYZ 数据集。
 from ase.io import read,write
 import os
 import argparse

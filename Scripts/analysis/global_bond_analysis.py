@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 统计整个结构或轨迹中的元素对键长分布。
 #统计A-B键分布
 import argparse
 import numpy as np

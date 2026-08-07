@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 将轨迹结构转换为带有 VASP 输入文件的单点计算目录。
 from ase.io import read
 from ase.io.vasp import write_vasp
 import os

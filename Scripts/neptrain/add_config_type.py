@@ -1,5 +1,7 @@
 """Add an ASE/extended-XYZ Config_type label to structures or trajectories."""
 
+# CCkit 功能说明：
+# 为 ASE 支持的结构或轨迹添加统一的 Config_type 标签。
 import argparse
 from pathlib import Path
 

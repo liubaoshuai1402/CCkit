@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# CCkit 命令行入口：根据 tools.json 将功能名映射到对应的 Python 工具脚本，
+# 支持交互式菜单模式和命令行模式。
 import argparse
 import subprocess
 import sys

@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 分析氢原子附近局部环境中的元素对键长分布。
 #统计了氢原子附近的A-B键分布
 import numpy as np
 from ase.io import read 

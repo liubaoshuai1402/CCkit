@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 实验性脚本：计算结构数据中的距离或相关分布。
 import os
 import pandas as pd
 import numpy as np

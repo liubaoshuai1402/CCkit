@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 分析轨迹中原子团簇的连通关系，并统计或绘制团簇连接信息。
 import numpy as np
 from ase.io import read
 import matplotlib.pyplot as plt

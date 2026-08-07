@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 识别轨迹中的原子团簇并统计不同团簇尺寸的数量。
 import numpy as np
 from ase.io import read
 from collections import Counter

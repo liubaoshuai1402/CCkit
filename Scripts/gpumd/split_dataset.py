@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 将结构数据集随机划分为训练集、验证集和测试集。
 from ase.io import read,write
 import os
 import argparse

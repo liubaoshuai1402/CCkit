@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 读取 NEB 图片目录并生成结构轨迹或动画文件。
 import os
 import sys
 from ase.io import read,write

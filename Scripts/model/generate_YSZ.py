@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 同时执行元素替位和氧空位生成，构造 YSZ 类型结构。
 import argparse
 from ase.io import read,write
 import random

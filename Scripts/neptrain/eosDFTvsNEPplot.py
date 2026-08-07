@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 比较 DFT 与 NEP 的 EOS 能量结果并绘图。
 import numpy as np
 import matplotlib.pyplot as plt
 from ase.io import read

@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 随机删除指定元素原子，生成空位结构。
 import argparse
 import random
 from ase.io import read, write

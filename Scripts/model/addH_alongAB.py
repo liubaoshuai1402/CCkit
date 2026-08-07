@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 沿两个原子定义的方向添加氢原子。
 from ase.io import read, write
 import numpy as np
 import argparse

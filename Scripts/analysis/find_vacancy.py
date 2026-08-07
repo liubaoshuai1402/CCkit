@@ -5,6 +5,8 @@ subtracts the current oxygen density, and reports the strongest density deficits
 The resulting coordinates belong to the current (defective) structure.
 """
 
+# CCkit 功能说明：
+# 根据参考结构与缺陷结构的原子密度差定位氧空位位置。
 import argparse
 import csv
 from concurrent.futures import ProcessPoolExecutor

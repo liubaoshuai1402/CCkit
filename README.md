@@ -4,15 +4,27 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/liubaoshuai1402/cckit)
 
+A command-line toolkit for modeling, preparing, and analyzing crystal-structure calculations. CCkit connects common tasks in DFT, molecular dynamics, NEP machine-learning potentials, and NEB workflows through small Python utilities.
 
+## What CCkit provides
 
-Tools for modeling and analysis of crystal calculation (DFT and MD). 
+- **Structure modeling**: supercells, strain and rattling, substitutions, vacancies, interstitials, surfaces, interfaces, and structural edits.
+- **VASP workflow preparation**: single-point calculation folders, POSCAR cleanup and sorting, surface constraints, and OUTCAR comparison.
+- **NEP and GPUMD utilities**: dataset conversion, merging and splitting, configuration labels, NEP relaxation, and NPT averaging.
+- **Trajectory and structure analysis**: hydrogen states, hydrogen vacancies, oxygen vacancies, bond distributions, atom displacements, and cluster connectivity.
+- **NEB workflow support**: image generation, image alignment, trajectory/movie generation, and DFT-versus-NEP barrier plots.
 
-## Features
+## Project layout
 
-- **Python scripts**: a python-user friendly script. 
-
-
+| Directory | Purpose |
+| --- | --- |
+| Scripts/model | Build and modify crystal structures |
+| Scripts/vasp | Prepare and inspect VASP calculations |
+| Scripts/gpumd | GPUMD and NEP utilities |
+| Scripts/neptrain | NEP dataset preparation and comparison plots |
+| Scripts/neb | NEB image and visualization tools |
+| Scripts/analysis | Structural and trajectory analysis |
+| undeveloped | Experimental scripts that are not part of the stable command set |
 
 ## Installation
 
@@ -74,7 +86,71 @@ Set the `CCkit_PATHS` variables and add same path into `Path`,
 
 ## Usage
 
-CCkit supports <u>*menu mode*</u> and <u>*command-line mode*</u>
+CCkit supports current menu mode and command-line mode.
+
+### Current command-line usage
+
+List all registered functions:
+
+```powershell
+CCkit --listall
+```
+
+The current function names and their script mappings are defined in tools.json. The launcher finds the mapped script under CCkit_PATHS and forwards the remaining arguments to it.
+
+Use the function-specific help message before running a task:
+
+```powershell
+CCkit generate-strain -h
+CCkit model-surface -h
+CCkit dft-to-nep -h
+```
+
+General command-line form:
+
+```powershell
+CCkit <function> <arguments>
+```
+
+### Main workflow areas
+
+- **Structure modeling**: generate supercells, strain/rattled structures, substitutions, vacancies, surfaces, interfaces, and edited structures.
+- **VASP preparation**: create single-point calculation folders, sort POSCAR files, fix surface atoms, clean calculation directories, and compare OUTCAR results.
+- **NEP/GPUMD**: collect DFT data, merge and split datasets, add Config_type labels, relax structures with NEP, and average NPT properties.
+- **Analysis**: study hydrogen states, hydrogen vacancies, oxygen vacancies, bond distributions, atom displacements, and cluster connectivity.
+- **NEB**: generate and align images, make movies, and compare DFT and NEP energy barriers.
+
+### Example workflows
+
+Generate strained and rattled structures:
+
+```powershell
+CCkit generate-strain prim.xyz 0.005 10 10 2 -o strained.xyz
+```
+
+Prepare VASP single-point calculations from a trajectory:
+
+```powershell
+CCkit convert-xyz-sp trajectory.xyz --submit vasp.pbs
+```
+
+Build an NEP dataset from VASP calculations:
+
+```powershell
+CCkit dft-to-nep --pos ./vasp_calculations
+CCkit split-dataset dataset.xyz 0.1 0.1
+```
+
+Generate NEB images between two structures:
+
+```powershell
+CCkit make-neb POSCAR_initial POSCAR_final 5
+```
+
+CCkit primarily handles POSCAR, XYZ, extended XYZ, and VASP OUTCAR files through ASE and pymatgen. Different functions may additionally require numpy, scipy, matplotlib, hiphive, calorine, imageio, or other workflow-specific packages.
+
+<!-- The original M100x examples are retained below as historical reference.
+Use the current names from tools.json for new commands.
 
 #### Menu Mode
 
@@ -263,4 +339,6 @@ If you want to sample one structure every 100 structures and neglect the first 5
 ```
 CCkit M1005 1.xyz --slice 500::100 --submit vasp.pbs --KPOINTS
 ```
+
+-->
 

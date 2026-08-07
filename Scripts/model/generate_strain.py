@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 生成单轴应变、仿射应变以及随机扰动后的结构，可用于机器学习势训练数据。
 import argparse
 from ase.io import read,write
 import numpy as np

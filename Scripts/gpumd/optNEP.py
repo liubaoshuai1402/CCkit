@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 使用 NEP 势和 calorine 对结构进行几何优化。
 import argparse,os
 import numpy as np
 from ase.io import read,write

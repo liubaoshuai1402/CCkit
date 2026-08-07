@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 识别并统计结构或轨迹中的间隙氢原子。
 import numpy as np
 from ase.io import read 
 from pymatgen.io.ase import AseAtomsAdaptor

@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 使用 ASE 合并多个 XYZ 或扩展 XYZ 文件。
 from ase.io import read,write
 import argparse
 

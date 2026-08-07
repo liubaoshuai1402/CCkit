@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 清理 VASP 计算目录中的非核心文件，保留主要输入文件。
 import os
 
 keep_prefix = ("INCAR","KPOINTS","POSCAR","POTCAR")

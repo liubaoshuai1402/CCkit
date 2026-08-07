@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 枚举给定晶体结构的可能有序构型并输出结构结果。
 from pymatgen.core import Structure
 from pymatgen.transformations.advanced_transformations import (
     EnumerateStructureTransformation,

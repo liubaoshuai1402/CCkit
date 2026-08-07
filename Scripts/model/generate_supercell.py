@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 按照给定的三个方向倍数生成晶体超胞。
 from ase.io import read, write
 from ase.build import make_supercell
 import argparse

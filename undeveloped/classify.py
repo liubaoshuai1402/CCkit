@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 实验性脚本：根据结构或数据特征对对象进行分类。
 import os
 import shutil
 import numpy as np

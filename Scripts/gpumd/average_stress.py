@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 根据 GPUMD 的 NPT 热力学输出计算平均应力。
 import numpy as np
 import os
 import argparse

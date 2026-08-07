@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 在由两个原子定义的直线上放置或构造二聚体。
 #add a dimer along a line defined by two atoms
 import numpy as np
 from ase.io import read, write

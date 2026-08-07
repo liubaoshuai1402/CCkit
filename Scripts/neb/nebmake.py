@@ -1,3 +1,5 @@
+# CCkit 功能说明：
+# 根据初态和终态结构插值生成 NEB 图片目录。
 import os
 import argparse
 from pymatgen.core import Structure
