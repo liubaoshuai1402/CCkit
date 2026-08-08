@@ -25,4 +25,4 @@ _CCkit_completions() {
 }
 
 # 注册补全函数，大小写必须和实际文件名一致
-complete -F _CCkit_completions CCkit
+complete -o default -F _CCkit_completions CCkit

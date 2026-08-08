@@ -1,0 +1,11 @@
+# CCkit 跨平台行尾设置：
+# 仓库内所有文本文件统一以 LF 存储；检出时按下面的规则转换。
+
+# 所有文本文件统一以 LF 存储和检出（Windows/Linux 通用，避免行尾改动刷屏）
+* text eol=lf
+
+# Windows 批处理脚本：工作区必须用 CRLF，避免 cmd 解析异常
+*.bat text eol=crlf
+
+# Unix/Linux 脚本：必须用 LF，CRLF 会导致 shebang 与命令出错
+*.sh text eol=lf

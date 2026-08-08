@@ -1,6 +1,7 @@
 # CCkit 功能说明：
 # 按照原子索引将指定原子替换为目标元素。
 import argparse
+import os
 from ase.io import read, write
 
 def replace_atoms(atoms, indices, element):
@@ -15,7 +16,7 @@ def main():
     parser.add_argument("filename", help="Input structure file")
     parser.add_argument("indices", nargs="+", type=int, help="Atom indices to replace")
     parser.add_argument("-e", "--element", required=True, help="New element symbol")
-    parser.add_argument("-o", "--output", default="POSCAR_replaced")
+    parser.add_argument("-o", "--output", default=None)
     parser.add_argument("-s", "--sort", nargs="+", help="Sort elements order, e.g. Zr Fe O")
     args = parser.parse_args()
 
@@ -34,7 +35,12 @@ def main():
         indices = sorted(range(len(new_atoms)),key=lambda i: element_order.get(new_atoms[i].symbol, len(element_order)))
         new_atoms = new_atoms[indices]
 
-    output = f"{args.output}_{args.element}_{'_'.join(map(str, args.indices))}"
+    output_base = args.output
+    if output_base is None:
+        input_dir = os.path.dirname(os.path.abspath(args.filename))
+        output_base = os.path.join(input_dir, "POSCAR_replaced")
+
+    output = f"{output_base}_{args.element}_{'_'.join(map(str, args.indices))}"
 
     write(output, new_atoms, format="vasp", vasp5=True, direct=True)
 

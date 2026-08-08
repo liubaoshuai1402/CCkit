@@ -17,6 +17,7 @@ from ase.io import read, write
 from ase import Atom
 import numpy as np
 import argparse
+import os
 
 
 def calc_position(mode, args, atoms):
@@ -59,7 +60,7 @@ def main():
     parser.add_argument("--O", type=int, help="oxygen index")
     parser.add_argument("--M", type=int, help="metal index")
     parser.add_argument("--distance", type=float, default=1.0, help="distance to reference O atom")
-    parser.add_argument("--output", type=str, default="POSCAR")
+    parser.add_argument("--output", type=str, default=None)
 
     args = parser.parse_args()
 
@@ -67,13 +68,18 @@ def main():
     pos = calc_position(args.mode, args, atoms)
     atoms_new = add_atom(atoms, args.element, pos)
 
+    output_base = args.output
+    if output_base is None:
+        input_dir = os.path.dirname(os.path.abspath(args.input))
+        output_base = os.path.join(input_dir, "POSCAR")
+
     if args.mode == "position":
         pos = list(args.position)
-        write(f"{args.output}_{pos[0]:.3f}_{pos[1]:.3f}_{pos[2]:.3f}", atoms_new)
+        write(f"{output_base}_{pos[0]:.3f}_{pos[1]:.3f}_{pos[2]:.3f}", atoms_new)
     elif args.mode == "center":
-        write(f"{args.output}_center_{args.atomA}_{args.atomB}", atoms_new)
+        write(f"{output_base}_center_{args.atomA}_{args.atomB}", atoms_new)
     elif args.mode == "OH":
-        write(f"{args.output}_OH_{args.O}_{args.M}", atoms_new)
+        write(f"{output_base}_OH_{args.O}_{args.M}", atoms_new)
 
 
 if __name__ == "__main__":

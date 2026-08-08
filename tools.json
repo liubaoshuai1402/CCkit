@@ -158,5 +158,17 @@
     "sort-poscar": {
         "script": "sort_poscar.py",
         "desc": "Sort POSCAR by element type"
+    },
+    "prepare-vasp-batch": {
+        "script": "prepare_high_throughput.py",
+        "desc": "Distribute VASP input files to all POSCAR directories"
+    },
+    "vasp-displacement": {
+        "script": "vasp_displacement.py",
+        "desc": "Report POSCAR to CONTCAR atomic displacements"
+    },
+    "check-convergence": {
+        "script": "check_convergence.py",
+        "desc": "Check VASP OUTCAR convergence status"
     }
 }
