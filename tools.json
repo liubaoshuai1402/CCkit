@@ -63,6 +63,10 @@
         "script": "split_dataset.py",
         "desc": "Split dataset into train, valid, test sets"
     },
+    "group-type": {
+        "script": "group_type.py",
+        "desc": "Label XYZ atoms by element type across a folder"
+    },
     "hydrogen-vacancy": {
         "script": "count_H_vacancy.py",
         "desc": "Count interstitial H atoms in structures"
@@ -79,6 +83,10 @@
         "script": "find_vacancy.py",
         "desc": "Locate oxygen vacancies using reference-site matching or density deficits"
     },
+    "seg-cal": {
+        "script": "seg_cal.py",
+        "desc": "Calculate average grain-boundary segregation concentration"
+    },
     "average-cell": {
         "script": "average_cell.py",
         "desc": "Average cell from NPT simulation using thermo.out"
@@ -94,6 +102,10 @@
     "compare-eos": {
         "script": "eosDFTvsNEPplot.py",
         "desc": "Plot DFT vs NEP energy for EOS results"
+    },
+    "eos-maker": {
+        "script": "eos_maker.py",
+        "desc": "Prepare VASP volume scans and fit Birch-Murnaghan EOS"
     },
     "prepare-sp": {
         "script": "PrepareSP.py",
@@ -127,18 +139,6 @@
         "script": "catxyz.py",
         "desc": "cat xyz files into one"
     },
-    "model-surface": {
-        "script": "model_surface.py",
-        "desc": "Generate surface structures"
-    },
-    "model-surface-ase": {
-        "script": "model_surface_ase.py",
-        "desc": "Generate surface structures using ASE"
-    },
-    "model-interface": {
-        "script": "model_interface.py",
-        "desc": "model interface structures"
-    },
     "reset-vasp": {
         "script": "reset_vasp.py",
         "desc": "Reset VASP input files"
@@ -155,6 +155,10 @@
         "script": "fix_surface.py",
         "desc": "Fix atoms by fractional z range"
     },
+    "fix-interface": {
+        "script": "fix_interface.py",
+        "desc": "Fix atoms by fractional z range (fix two interfaces)"
+    },
     "sort-poscar": {
         "script": "sort_poscar.py",
         "desc": "Sort POSCAR by element type"
@@ -170,5 +174,9 @@
     "check-convergence": {
         "script": "check_convergence.py",
         "desc": "Check VASP OUTCAR convergence status"
+    },
+    "check-stress": {
+        "script": "check_stress.py",
+        "desc": "Report final VASP cell stress and pressure in GPa"
     }
 }

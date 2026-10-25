@@ -1,0 +1,13 @@
+# Local AI collaboration rules
+**/AGENTS.md
+/CONVENTIONS.md
+/PROJECT_GUIDE.md
+/.agents/
+/.codex/
+
+# Experimental scripts kept only in the local checkout
+/undeveloped/
+
+# Python caches
+__pycache__/
+*.py[cod]
