@@ -229,7 +229,7 @@ CCkit primarily handles POSCAR, XYZ, extended XYZ, and VASP OUTCAR files through
 
 ## VASP module: command reference
 
-The commands below map to every script in `Scripts/vasp/`. Run `CCkit <command> -h` for the current argument list, except for `reset-vasp` (it does not parse arguments). Structure-reading commands use ASE; `compare-vasp-ef` and `vasp-displacement` also use NumPy. `reset-vasp`, `prepare-vasp-batch`, `check-convergence`, and `check-stress` use only the Python standard library.
+The commands below map to every script in `Scripts/vasp/`. Run `CCkit <command> -h` for the current argument list. Structure-reading commands use ASE; `compare-vasp-ef` and `vasp-displacement` also use NumPy. `reset-vasp` (also available as `rest-vasp`), `prepare-vasp-batch`, `check-convergence`, and `check-stress` use only the Python standard library.
 
 ### `convert-xyz-sp` — trajectory to single-point jobs
 
@@ -329,15 +329,24 @@ CCkit check-stress ./run --threshold 0.1
 
 The default input is `OUTCAR` in the current directory. The terminal report gives the six tensor components, Cartesian tensor, pressure, shear and deviatoric summaries, and available convergence and termination markers. Values and `--threshold` use **GPa**; VASP's compression-positive sign convention is retained. The optional threshold screens the maximum absolute tensor component only when the OUTCAR explicitly has `ISIF=3` or `6` and zero `PSTRESS`. It is not a general convergence verdict. For `ISIF=1`, only the printed external pressure is treated as reliable. No file is written.
 
-### `reset-vasp` — clear a calculation directory
+### `reset-vasp` / `rest-vasp` — preview and confirm directory cleanup
 
-Run this **inside the directory to clean**:
+Run this **inside the directory to clean**. Both command names invoke the same tool:
 
 ```powershell
-CCkit reset-vasp
+CCkit reset-vasp -h
+CCkit rest-vasp -h
+CCkit rest-vasp 0
+CCkit reset-vasp 0 -remain CONTCAR vasp.pbs
 ```
 
-This command has no CLI argument parser: even `CCkit reset-vasp -h` performs the cleanup. It immediately removes every non-directory entry in the current directory whose name does not start with `INCAR`, `KPOINTS`, `POSCAR`, or `POTCAR`. Directories and their contents are skipped. Files such as `OUTCAR`, `CONTCAR`, and a submission script are deleted; files with one of the four prefixes are kept even if they are backup variants. The command has no dry-run mode or undo, so inspect the directory first.
+With no arguments or with `-h` / `--help`, the command only displays help. Cleanup requires the explicit positional mode `0`. It prints the absolute directory and the complete list of files to delete, then asks `y/n`. Only `y` (case-insensitive, allowing surrounding whitespace) proceeds. `n`, an empty response, any other response, end of input, or Ctrl+C at the prompt cancels without deleting files. If there are no candidates, it reports that and exits.
+
+The default keep rule preserves names starting with `INCAR`, `KPOINTS`, `POSCAR`, or `POTCAR`, including backup variants. Directories and their contents are skipped; cleanup does not recurse. Other files, including `OUTCAR`, `CONTCAR`, and submission scripts, are deletion candidates unless explicitly kept.
+
+Use `-remain FILE [FILE ...]` (or `--remain`) to preserve additional **exact filenames** alongside the default prefixes. Multiple names and repeated options are supported; quote names containing spaces. Names are matched case-sensitively, and paths and wildcard patterns are not supported. Missing names or directory names cause an error before cleanup so a misspelled keep name cannot silently proceed. For example, the last command above also keeps `CONTCAR` and `vasp.pbs`.
+
+Only files in the displayed list are deleted after confirmation; newly created files are not added. Deletion is permanent. A deletion error stops cleanup and reports the affected path; files already reported as removed remain deleted. **Migration:** existing calls to bare `CCkit reset-vasp` must now use `CCkit reset-vasp 0` and supply an interactive `y` confirmation.
 
 ## Model module: command reference
 
