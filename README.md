@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/liubaoshuai1402/cckit)
 
-A command-line toolkit for modeling, preparing, and analyzing crystal-structure calculations. CCkit connects common tasks in DFT, molecular dynamics, NEP machine-learning potentials, and NEB workflows through small Python utilities.
+A command-line toolkit for modeling, preparing, and analyzing crystal-structure calculations. CCkit brings common tasks in DFT, molecular dynamics, NEP machine-learning potentials, and NEB workflows together behind one launcher through small Python utilities.
 
 ## What CCkit provides
 
@@ -105,19 +105,19 @@ After that, type `cckit fix-` and press Tab to complete function names (works in
 
 ## Usage
 
-CCkit supports current menu mode and command-line mode.
+CCkit provides both a menu mode and a command-line mode.
 
-### Current command-line usage
+### Command-line usage
 
-List all registered functions:
+List all registered commands:
 
 ```powershell
 CCkit --listall
 ```
 
-The current function names and their script mappings are defined in tools.json. The launcher finds the mapped script under CCkit_PATHS and forwards the remaining arguments to it.
+Command names and their script mappings are defined in `tools.json`. The launcher locates the mapped script under `CCkit_PATHS` and forwards the remaining arguments to it.
 
-Use the function-specific help message before running a task:
+Check a command's help message before running it:
 
 ```powershell
 CCkit generate-strain -h
