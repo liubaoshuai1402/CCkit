@@ -143,10 +143,6 @@
         "script": "reset_vasp.py",
         "desc": "Preview and confirm VASP cleanup with optional extra files to keep"
     },
-    "rest-vasp": {
-        "script": "reset_vasp.py",
-        "desc": "Alias for reset-vasp: preview and confirm VASP cleanup"
-    },
     "compare-vasp-ef": {
         "script": "compare_ef.py",
         "desc": "Compare energy and force results from VASP calculations"

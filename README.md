@@ -229,7 +229,7 @@ CCkit primarily handles POSCAR, XYZ, extended XYZ, and VASP OUTCAR files through
 
 ## VASP module: command reference
 
-The commands below map to every script in `Scripts/vasp/`. Run `CCkit <command> -h` for the current argument list. Structure-reading commands use ASE; `compare-vasp-ef` and `vasp-displacement` also use NumPy. `reset-vasp` (also available as `rest-vasp`), `prepare-vasp-batch`, `check-convergence`, and `check-stress` use only the Python standard library.
+The commands below map to every script in `Scripts/vasp/`. Run `CCkit <command> -h` for the current argument list. Structure-reading commands use ASE; `compare-vasp-ef` and `vasp-displacement` also use NumPy. `reset-vasp`, `prepare-vasp-batch`, `check-convergence`, and `check-stress` use only the Python standard library.
 
 ### `convert-xyz-sp` — trajectory to single-point jobs
 
@@ -329,14 +329,13 @@ CCkit check-stress ./run --threshold 0.1
 
 The default input is `OUTCAR` in the current directory. The terminal report gives the six tensor components, Cartesian tensor, pressure, shear and deviatoric summaries, and available convergence and termination markers. Values and `--threshold` use **GPa**; VASP's compression-positive sign convention is retained. The optional threshold screens the maximum absolute tensor component only when the OUTCAR explicitly has `ISIF=3` or `6` and zero `PSTRESS`. It is not a general convergence verdict. For `ISIF=1`, only the printed external pressure is treated as reliable. No file is written.
 
-### `reset-vasp` / `rest-vasp` — preview and confirm directory cleanup
+### `reset-vasp` — preview and confirm directory cleanup
 
-Run this **inside the directory to clean**. Both command names invoke the same tool:
+Run this **inside the directory to clean**:
 
 ```powershell
 CCkit reset-vasp -h
-CCkit rest-vasp -h
-CCkit rest-vasp 0
+CCkit reset-vasp 0
 CCkit reset-vasp 0 -remain CONTCAR vasp.pbs
 ```
 
