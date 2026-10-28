@@ -96,7 +96,7 @@ def menu_mode():
 
 # ====== mian() ======
 def main():
-    parser = argparse.ArgumentParser(description="Welcome to CCkit")
+    parser = argparse.ArgumentParser(prog="cckit", description="Welcome to CCkit")
 
     parser.add_argument("--listall", action="store_true", help="List all available functions")
     parser.add_argument("func", nargs="?", help=f"functions (available:{', '.join(CONFIG.keys())})")
