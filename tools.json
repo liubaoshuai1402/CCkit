@@ -175,6 +175,14 @@
         "script": "check_convergence.py",
         "desc": "Check VASP OUTCAR convergence status"
     },
+    "inspect-energy": {
+        "script": "inspect_energy.py",
+        "desc": "Plot completed VASP ionic-step energies from OSZICAR or OUTCAR"
+    },
+    "inspect-force": {
+        "script": "inspect_force.py",
+        "desc": "Plot maximum atomic force components and magnitudes at VASP ionic steps"
+    },
     "check-stress": {
         "script": "check_stress.py",
         "desc": "Report final VASP cell stress and pressure in GPa"

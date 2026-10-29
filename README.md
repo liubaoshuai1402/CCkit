@@ -144,7 +144,7 @@ cckit <function> <arguments>
 ### Highlights
 
 - **Build structures** — create supercells, defects, substitutions, and strained configurations.
-- **Prepare and inspect VASP jobs** — set up calculations and check convergence, stress, and atomic displacements.
+- **Prepare and inspect VASP jobs** — set up calculations and inspect ionic-step energies and forces, convergence, stress, and atomic displacements.
 - **Prepare NEP datasets** — convert DFT results, label configurations, and split training data.
 - **Fit equations of state** — generate volume scans and compare DFT and NEP curves.
 - **Analyze trajectories** — explore hydrogen states, vacancies, bonds, and atomic clusters.
@@ -286,6 +286,36 @@ cckit check-convergence --root ./calculations --no-recursive
 ```
 
 Lists calculations with VASP's ionic convergence marker. `--no-recursive` limits the scan to immediate subdirectories; the root's own `OUTCAR` is excluded. This marker alone does not establish electronic convergence or normal termination.
+
+### `inspect-energy` — follow ionic relaxation energies
+
+Plot the energy of each completed **ionic step**, plus the change between adjacent steps, while a relaxation is running:
+
+```powershell
+cckit inspect-energy ./run/OSZICAR
+cckit inspect-energy ./run/OUTCAR --watch 5 --show
+```
+
+Writes `energy_vs_step.png` beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. A directory (default: `.`) prefers `OSZICAR`, then `OUTCAR`; `.gz` inputs are accepted. Requires matplotlib plus pymatgen for OSZICAR or ASE for OUTCAR.
+
+Defaults to **F / TOTEN** (eV per cell); `--energy E0` selects sigma→0 energy. Steps start at 1 in completed-record order, excluding electronic iterations and unfinished trailing records. The lower panel shows signed changes in meV (symmetric log scale, linear within ±1 meV). Energy trends alone do not establish force convergence.
+
+`--watch` refreshes every 5 seconds unless specified, saving when energies change; Ctrl+C retains the plot. `--show` opens a GUI window; closing it stops monitoring. Omit `--show` on a headless server. See `-h` for other options, including renamed input files.
+
+### `inspect-force` — follow maximum atomic forces
+
+Track the largest atomic force at each completed **ionic step** of a relaxation:
+
+```powershell
+cckit inspect-force ./run/OUTCAR
+cckit inspect-force ./run/OUTCAR --component total --watch 5 --show
+```
+
+By default, plots four curves in **eV/Å**: `max |Fx|`, `max |Fy|`, `max |Fz|`, and `max sqrt(Fx² + Fy² + Fz²)`, each maximum taken over all atoms independently. `--component x/y/z/total` selects one curve. Uses raw OUTCAR forces, including fixed atoms; OSZICAR is not supported. Requires ASE and matplotlib.
+
+Writes `force_vs_step.png` beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. Accepts `OUTCAR.gz` or a directory containing `OUTCAR` (then `OUTCAR.gz`). Steps start at 1 in completed-record order; incomplete trailing force tables or ionic summaries are excluded.
+
+`--watch` refreshes every 5 seconds unless specified, saving when maxima change; Ctrl+C retains the plot. Add `--show` for a GUI window, or omit it on a headless server. Closing the window stops monitoring.
 
 ### `check-stress` — report final cell stress
 
