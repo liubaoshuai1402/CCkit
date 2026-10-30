@@ -138,7 +138,7 @@ def resolve_output(path: Path, input_path: Path) -> Path:
     return path
 
 
-def draw_forces(figure: Figure, records: list[ForceMaxima], path: Path, component: str) -> None:
+def draw_forces(figure: Figure, records: list[ForceMaxima], component: str) -> None:
     """Plot selected force maxima in eV/Angstrom against completed ionic steps."""
     from matplotlib.ticker import MaxNLocator
 
@@ -149,7 +149,7 @@ def draw_forces(figure: Figure, records: list[ForceMaxima], path: Path, componen
     axis.spines[["top", "right"]].set_visible(False)
     for side in ("left", "bottom"):
         axis.spines[side].set_color("#d4dce8")
-    axis.tick_params(colors="#506078", labelsize=10)
+    axis.tick_params(axis="both", which="both", direction="in", colors="#506078", labelsize=10)
     axis.grid(axis="y", color="#e7ecf3", linewidth=0.8)
     axis.set_axisbelow(True)
 
@@ -179,9 +179,13 @@ def draw_forces(figure: Figure, records: list[ForceMaxima], path: Path, componen
         title=r"Latest maxima (eV/$\mathrm{\AA}$)", loc="upper right",
         frameon=True, facecolor="white", edgecolor="#e7ecf3", labelcolor="#27364d",
     )
+    for label in axis.get_xticklabels(which="both") + axis.get_yticklabels(which="both"):
+        label.set_fontweight("bold")
+    axis.xaxis.get_offset_text().set_fontweight("bold")
+    axis.yaxis.get_offset_text().set_fontweight("bold")
     figure.suptitle(
-        f"Ionic relaxation forces\n{path.parent.name} / {path.name}  ·  {len(records)} completed steps",
-        fontsize=14, fontweight="medium", color="#1e2d44",
+        "Force",
+        fontsize=14, fontweight="normal", color="#1e2d44",
     )
 
 
@@ -231,7 +235,7 @@ def main() -> None:
                 if records:
                     if figure is None:
                         figure = plt.figure(figsize=(9.5, 5.8), constrained_layout=True)
-                    draw_forces(figure, records, input_path, args.component)
+                    draw_forces(figure, records, args.component)
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     figure.savefig(output_path, dpi=220, facecolor=figure.get_facecolor())
                     latest = records[-1]

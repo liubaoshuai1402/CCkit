@@ -135,9 +135,9 @@ def resolve_output(path: Path, input_path: Path) -> Path:
     return path
 
 
-def draw_energy(figure: Figure, energies: list[float], path: Path, energy: str) -> None:
-    """Draw total energy and signed adjacent-step changes on shared ionic axes."""
-    from matplotlib.ticker import MaxNLocator, ScalarFormatter
+def draw_energy(figure: Figure, energies: list[float], energy: str) -> None:
+    """Draw total energy and signed adjacent-step changes in eV on ionic axes."""
+    from matplotlib.ticker import FormatStrFormatter, MaxNLocator, ScalarFormatter
 
     figure.clear()
     figure.set_facecolor("#f4f7fb")
@@ -145,7 +145,7 @@ def draw_energy(figure: Figure, energies: list[float], path: Path, energy: str) 
     energy_axis, delta_axis = axes
     steps = np.arange(1, len(energies) + 1)
     values = np.asarray(energies)
-    deltas = np.diff(values) * 1000.0
+    deltas = np.diff(values)
     blue, teal, orange = "#3267c8", "#138b80", "#d77a30"
 
     for axis in axes:
@@ -153,7 +153,7 @@ def draw_energy(figure: Figure, energies: list[float], path: Path, energy: str) 
         axis.spines[["top", "right"]].set_visible(False)
         for side in ("left", "bottom"):
             axis.spines[side].set_color("#d4dce8")
-        axis.tick_params(colors="#506078", labelsize=10)
+        axis.tick_params(axis="both", which="both", direction="in", colors="#506078", labelsize=10)
         axis.grid(axis="y", color="#e7ecf3", linewidth=0.8)
         axis.set_axisbelow(True)
 
@@ -176,9 +176,8 @@ def draw_energy(figure: Figure, energies: list[float], path: Path, energy: str) 
     if deltas.size:
         delta_axis.plot(steps[1:], deltas, color="#94a6bd", linewidth=1.1)
         delta_axis.scatter(steps[1:], deltas, c=np.where(deltas > 0, orange, teal), s=17, zorder=3)
-        delta_axis.set_yscale("symlog", linthresh=1.0)
         delta_axis.text(
-            0.98, 0.94, f"Latest change: {deltas[-1]:+.4g} meV",
+            0.98, 0.94, f"Latest change: {deltas[-1]:+.3e} eV",
             transform=delta_axis.transAxes, ha="right", va="top", fontsize=10, color="#506078",
         )
     else:
@@ -186,13 +185,21 @@ def draw_energy(figure: Figure, energies: list[float], path: Path, energy: str) 
             0.5, 0.5, "Step changes appear after the second ionic step",
             transform=delta_axis.transAxes, ha="center", va="center", color="#506078",
         )
-    delta_axis.set_ylabel("Step change (meV)\nsymlog; linear within ±1", color="#27364d")
+    delta_axis.set_ylabel("Step change (eV)", color="#27364d")
+    delta_axis.set_yscale("linear")
+    delta_axis.yaxis.set_major_formatter(FormatStrFormatter("%.1e"))
+    delta_axis.yaxis.set_major_locator(MaxNLocator(nbins=4))
     delta_axis.set_xlabel("Ionic step (completed records, starting at 1)", color="#27364d", labelpad=8)
     delta_axis.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=9))
     delta_axis.set_xlim(0.6, max(1.4, len(values) + 0.4))
+    for axis in axes:
+        for label in axis.get_xticklabels(which="both") + axis.get_yticklabels(which="both"):
+            label.set_fontweight("bold")
+        axis.xaxis.get_offset_text().set_fontweight("bold")
+        axis.yaxis.get_offset_text().set_fontweight("bold")
     figure.suptitle(
-        f"Ionic relaxation energy\n{path.parent.name} / {path.name}  ·  {len(values)} completed steps",
-        fontsize=14, fontweight="medium", color="#1e2d44",
+        "Energy",
+        fontsize=14, fontweight="normal", color="#1e2d44",
     )
 
 
@@ -246,7 +253,7 @@ def main() -> None:
                 if energies:
                     if figure is None:
                         figure = plt.figure(figsize=(9.5, 6.5), constrained_layout=True)
-                    draw_energy(figure, energies, input_path, args.energy)
+                    draw_energy(figure, energies, args.energy)
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     figure.savefig(output_path, dpi=220, facecolor=figure.get_facecolor())
                     change = f"; last dE = {energies[-1] - energies[-2]:+.6g} eV" if len(energies) > 1 else ""

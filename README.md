@@ -298,7 +298,7 @@ cckit inspect-energy ./run/OUTCAR --watch 5 --show
 
 Writes `energy_vs_step.png` beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. A directory (default: `.`) prefers `OSZICAR`, then `OUTCAR`; `.gz` inputs are accepted. Requires matplotlib plus pymatgen for OSZICAR or ASE for OUTCAR.
 
-Defaults to **F / TOTEN** (eV per cell); `--energy E0` selects sigma→0 energy. Steps start at 1 in completed-record order, excluding electronic iterations and unfinished trailing records. The lower panel shows signed changes in meV (symmetric log scale, linear within ±1 meV). Energy trends alone do not establish force convergence.
+Defaults to **F / TOTEN** (eV per cell); `--energy E0` selects sigma→0 energy. Steps start at 1 in completed-record order, excluding electronic iterations and unfinished trailing records. The lower panel shows signed adjacent-step energy changes in eV on a linear axis with scientific-notation tick labels. Energy trends alone do not establish force convergence.
 
 `--watch` refreshes every 5 seconds unless specified, saving when energies change; Ctrl+C retains the plot. `--show` opens a GUI window; closing it stops monitoring. Omit `--show` on a headless server. See `-h` for other options, including renamed input files.
 
