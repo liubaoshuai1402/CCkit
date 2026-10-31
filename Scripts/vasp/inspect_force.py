@@ -237,7 +237,7 @@ def main() -> None:
                         figure = plt.figure(figsize=(9.5, 5.8), constrained_layout=True)
                     draw_forces(figure, records, args.component)
                     output_path.parent.mkdir(parents=True, exist_ok=True)
-                    figure.savefig(output_path, dpi=220, facecolor=figure.get_facecolor())
+                    figure.savefig(output_path, dpi=600, facecolor=figure.get_facecolor())
                     latest = records[-1]
                     print(
                         f"{len(records)} completed ionic steps; latest maxima (eV/Angstrom): "

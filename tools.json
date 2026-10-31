@@ -19,6 +19,10 @@
         "script": "generate_sol.py",
         "desc": "Generate all possible solution structures"
     },
+    "atat-sqs": {
+        "script": "atat_sqs.py",
+        "desc": "Prepare fixed-cell ATAT SQS jobs from POSCAR"
+    },
     "convert-xyz-sp": {
         "script": "convert_xyz_singlepoint.py",
         "desc": "Generate singlepoint structure"

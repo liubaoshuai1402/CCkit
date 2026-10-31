@@ -255,7 +255,7 @@ def main() -> None:
                         figure = plt.figure(figsize=(9.5, 6.5), constrained_layout=True)
                     draw_energy(figure, energies, args.energy)
                     output_path.parent.mkdir(parents=True, exist_ok=True)
-                    figure.savefig(output_path, dpi=220, facecolor=figure.get_facecolor())
+                    figure.savefig(output_path, dpi=600, facecolor=figure.get_facecolor())
                     change = f"; last dE = {energies[-1] - energies[-2]:+.6g} eV" if len(energies) > 1 else ""
                     print(
                         f"{len(energies)} completed ionic steps; latest {args.energy} = {energies[-1]:.8f} eV{change}\n"

@@ -1,0 +1,86 @@
+#!/bin/bash
+#SBATCH -p @@PARTITION@@
+#SBATCH -J SQS-@@FORMULA@@
+#SBATCH -o %j.out
+#SBATCH -e %j.err
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --export=ALL
+
+# CCkit: one seed, one serial search, fixed input cell.
+set -euo pipefail
+seed="${1:-@@SEED@@}"
+steps="${2:-@@STEPS@@}"
+[[ $# -le 2 && "$seed" =~ ^[1-9][0-9]{0,9}$ && "$steps" =~ ^[1-9][0-9]{0,9}$ ]] || {
+    echo "Usage: sbatch run_sqs.sh [POSITIVE_SEED [POSITIVE_MC_STEPS]]" >&2
+    exit 1
+}
+(( seed <= 2147483647 && steps <= 2147483647 )) || {
+    echo "Seed and steps must fit signed 32-bit integers." >&2; exit 1;
+}
+
+if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+    command -v sbatch >/dev/null || { echo "Slurm sbatch is required." >&2; exit 1; }
+    design_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+    exec sbatch --chdir="$design_dir" "$design_dir/run_sqs.sh" "$seed" "$steps"
+fi
+
+# Slurm executes a spool copy; cwd is set by cd before sbatch or --chdir.
+design_dir="$(pwd -P)"
+[[ "${SLURM_NTASKS:-1}" == 1 && "${SLURM_CPUS_PER_TASK:-1}" == 1 && "${SLURM_JOB_NUM_NODES:-1}" == 1 ]] || {
+    echo "Request one node, one task and one CPU per task." >&2; exit 1;
+}
+for program in srun mcsqs corrdump getclus python3; do
+    command -v "$program" >/dev/null || { echo "Missing program in job PATH: $program" >&2; exit 1; }
+done
+files=(rndstr.in sqscell.out sqsparam.in POSCAR.reference design.json validate_and_export.py)
+for file in "${files[@]}"; do
+    [[ -r "$design_dir/$file" ]] || { echo "Missing $file; submit from the SQS design directory." >&2; exit 1; }
+done
+export OMP_NUM_THREADS=1
+export SLURM_EXPORT_ENV=ALL
+run_on_compute() {
+    srun --nodes=1 --ntasks=1 --cpus-per-task=1 --mpi=none "$@"
+}
+run_dir="$design_dir/runs/slurm_${SLURM_JOB_ID}_seed_${seed}"
+mkdir -p -- "$design_dir/runs"
+mkdir -- "$run_dir"
+trap 'status=$?; if (( status != 0 )); then printf "exit_code=%s\n" "$status" > "$run_dir/FAILED"; fi' EXIT
+for file in "${files[@]}"; do
+    cp -- "$design_dir/$file" "$run_dir/$file"
+done
+cd -- "$run_dir"
+printf 'job_id=%s\npartition=%s\nnodes=%s\nseed=%s\nmaximum_mc_steps=%s\npair_cutoff_A=@@PAIR@@\ntriplet_cutoff_A=@@TRIPLET@@\ncorrelation_tolerance=@@TOL@@\n' \
+    "$SLURM_JOB_ID" "${SLURM_JOB_PARTITION:-@@PARTITION@@}" "${SLURM_JOB_NODELIST:-unknown}" \
+    "$seed" "$steps" > run_settings.txt
+echo "Results: $run_dir"
+echo "To stop cleanly: touch '$run_dir/stopsqs'"
+run_on_compute python3 validate_and_export.py --check-inputs > input_validation.log 2>&1
+
+# No-argument invocation prints the actual options and normally exits with 1.
+# -h prints the long manual and cannot establish availability of -ms.
+probe_status=0
+help_text="$(run_on_compute mcsqs 2>&1)" || probe_status=$?
+printf '%s\n' "$help_text" > atat_help.txt
+printf 'option_probe_exit_code=%s\n' "$probe_status" >> run_settings.txt
+if (( probe_status > 1 )); then
+    echo "mcsqs option query failed; inspect atat_help.txt." >&2
+    exit "$probe_status"
+fi
+[[ "$help_text" == *"Monte Carlo generator of Special Quasirandom Structures"* && "$help_text" == *"-n="* ]] || {
+    echo "Invalid mcsqs option table; inspect atat_help.txt." >&2; exit 1;
+}
+[[ "$help_text" =~ (^|[[:space:]])-ms(=|[[:space:]]) ]] || {
+    echo "Installed mcsqs lacks -ms. Use ATAT 3.52 or a compatible version." >&2; exit 1;
+}
+run_on_compute corrdump -l=rndstr.in -ro -noe -nop -clus -2=@@PAIR@@ -3=@@TRIPLET@@ -sig=16 > clusters_generation.log 2>&1
+test -s clusters.out || { echo "No clusters generated; see clusters_generation.log." >&2; exit 1; }
+run_on_compute getclus > cluster_summary.out
+run_on_compute mcsqs -n=@@ATOMS@@ -rc -sd="$seed" -ms="$steps" -sig=16 -tol=@@TOL@@ > mcsqs.stdout.log 2>&1
+test -s bestsqs.out || { echo "No SQS; see mcsqs.log and mcsqs.stdout.log." >&2; exit 1; }
+test -s bestcorr.out || { echo "Missing bestcorr.out." >&2; exit 1; }
+run_on_compute python3 validate_and_export.py --groups rndstrgrp.out > validation.log 2>&1
+touch SUCCESS
+echo "Finished: $run_dir/POSCAR_sqs"
+echo "Inspect bestcorr.out and mcsqs.log to assess SQS quality."

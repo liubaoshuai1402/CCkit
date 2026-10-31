@@ -1,0 +1,78 @@
+# @@FORMULA@@ 固定晶胞 SQS
+
+本目录由 `cckit atat-sqs` 生成。保持输入 POSCAR 的全部 @@ATOMS@@ 个位点及完整晶胞矩阵，只优化母体位点上的元素占位；多元素输入中的其他元素位点保持固定。
+
+## 使用
+
+生成任务时，`--solute` 后可连续填写任意多种溶质，也可重复使用 `--solute` 追加不同元素，下面两种形式等价：
+
+```bash
+cckit atat-sqs POSCAR --host Zr --solute Nb=2 Fe=3 Mo=1
+cckit atat-sqs POSCAR --host Zr --solute Nb=2 --solute Fe=3 --solute Mo=1
+```
+
+每项采用 `元素=正整数`，表示替换该数量的母体原子；同一种元素只能指定一次，总替换数不能超过母体位点数。上述示例对 Zr64 输入得到 Zr58Nb2Fe3Mo1，仍为 64 个原子。纯元素输入可省略 `--host`，多元素输入必须明确指定。
+
+生成阶段需要 Python 3.10+、NumPy 和 pymatgen。集群的 `python3` 也需安装 NumPy、pymatgen；ATAT 推荐 3.52 或兼容 `-ms` 及新版 `sqscell.out` 约定的版本。提交前在环境中设置好 ATAT 和 Python 的 PATH。
+
+输入需使用右手晶格矢量（行列式为正）；对左手晶胞会直接报错，避免 pymatgen 写出 POSCAR 时自动翻转晶格矢量。
+
+将整个目录复制到 Linux/Slurm 集群，进入该目录后提交：
+
+```bash
+sbatch run_sqs.sh
+# 或为这一次作业覆盖种子和最大步数：
+sbatch run_sqs.sh 102 400000
+```
+
+默认分区为 `@@PARTITION@@`，单节点、单任务、单 CPU；每次提交只运行一个种子。默认种子 @@SEED@@、最大步数 @@STEPS@@。在作业分配之外执行 `bash run_sqs.sh` 也只会提交作业。通过 `sbatch` 直接提交时，必须先进入本目录，或使用 `sbatch --chdir=/path/to/this/directory /path/to/this/directory/run_sqs.sh`。
+
+每次作业新建 `runs/slurm_<jobid>_seed_<seed>/`，已有目录会被拒绝覆盖。全部 ATAT 命令及 Python 检查通过 `srun` 在分配的计算节点执行；运行目录保留输入副本和参数记录，不依赖 CCkit 安装路径。
+
+成功后得到 **`POSCAR_sqs`**、`validation_report.json` 和 `SUCCESS`。最终结构使用原始几何，只转移 ATAT 的元素占位；按 `design.json` 的 `species_order` 分组（Zr-Nb-Fe 示例为 `Zr Nb Fe`），并保留重排后的 Selective dynamics 标记。pymatgen 重新写出数值格式，不保证与原 POSCAR 逐字节相同；速度不导出。
+
+## 输入与运行参数
+
+| 文件 | 内容 |
+| --- | --- |
+| `POSCAR.reference` | 原始输入的逐字节副本 |
+| `rndstr.in` | 原晶胞作为坐标基底、单位晶格矩阵、全部原始位点及部分占位概率 |
+| `sqscell.out` | 只列出一个单位矩阵，用 `-rc` 固定原晶胞；采用 ATAT >=3.07 约定 |
+| `sqsparam.in` | `wr wn wd T = 1 1 0 1`；T 是搜索算法参数 |
+| `design.json` | 母体、目标元素数量、元素顺序、距离与容差、默认种子及预算 |
+| `run_sqs.sh` | Slurm 提交与搜索流程 |
+| `validate_and_export.py` | 输入检查、对称位点组整数占位检查、结果映射与导出 |
+
+本任务 pair 截断为 @@PAIR@@ Å，triplet 截断为 @@TRIPLET@@ Å，相关函数容差为 @@TOL@@。这些默认值来自原 Zr-Nb-Fe 工作流；其他材料及晶胞应自行选择截断和搜索预算。`design.json` 记录生成参数；一次作业实际的种子和步数以 `run_settings.txt` 为准。要修改截断等搜索设置，应通过 `cckit atat-sqs` 参数生成一个新目录。
+
+## 如何判断结果
+
+- `bestsqs.out`：ATAT 本次搜索找到的最佳占位。
+- `bestcorr.out`：团簇点数、直径、实际相关函数、随机态目标及两者差值，五列用于评价统计误差。
+- `validation_report.json`：元素数、晶胞、映射误差、按元素分类的原位点编号、溶质对周期最短距离以及输出顺序到原位点的映射，所有位点编号从 1 开始。
+- `validation.log` / `input_validation.log`：结果转换 / 输入检查的记录。
+- `mcsqs.log` / `mcsqs.stdout.log`：搜索记录及终端输出。
+- `clusters.out` / `cluster_summary.out`：选取的团簇及其摘要。
+- `rndstrgrp.out` / `sym.out`：对称等价位点分组 / 对称操作。
+- `atat_help.txt` / `clusters_generation.log`：实际 mcsqs 选项表 / 团簇生成日志。
+- `FAILED`：创建运行目录后的流程异常退出码；Slurm 强制终止时可能来不及写入。
+
+`SUCCESS` 表示流程和结构检查通过。SQS 质量仍需查看 `bestcorr.out` 并比较同设置下不同种子的结果。有限小胞和稀释溶质未必能够达到 perfect match，最大步数也不代表收敛。
+
+若 ATAT 将母体位点拆成多个对称组，每组的目标元素数都必须为整数；否则固定胞可能无法容纳目标随机态，ATAT 会失败或后续检查拒绝导出。检查原始几何、对称性和组成，不会自动扩胞或理想化结构。
+
+运行中若已获得满意结果，可在实际运行目录创建停止文件，让 ATAT 正常结束并继续导出：
+
+```bash
+touch runs/slurm_<jobid>_seed_<seed>/stopsqs
+```
+
+搜索结束后，在运行目录可手动重新导出为另一组新文件：
+
+```bash
+python3 validate_and_export.py --groups rndstrgrp.out -o POSCAR_sqs_v2 --report validation_report_v2.json
+```
+
+检查工具拒绝覆盖已有结构或报告。导出后按 `POSCAR_sqs` 的元素顺序准备 VASP POTCAR；如需固定晶胞做后续离子松弛，可按自己的 VASP 设置使用 `ISIF=2`。
+
+格式及运行约定参见 [ATAT 官方 mcsqs 手册](https://axelvandewalle.github.io/www-avdw/atat/manual/node49.html)。生成输入不表示已经执行或验证过真实 SQS 搜索。

@@ -24,6 +24,7 @@ A command-line toolkit for modeling, preparing, and analyzing crystal-structure 
 | Scripts/neptrain | NEP dataset preparation and comparison plots |
 | Scripts/neb | NEB image and visualization tools |
 | Scripts/analysis | Structural and trajectory analysis |
+| template/&lt;script_name&gt; | Auxiliary templates grouped by core script filename without its extension |
 
 ## Installation
 
@@ -296,7 +297,7 @@ cckit inspect-energy ./run/OSZICAR
 cckit inspect-energy ./run/OUTCAR --watch 5 --show
 ```
 
-Writes `energy_vs_step.png` beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. A directory (default: `.`) prefers `OSZICAR`, then `OUTCAR`; `.gz` inputs are accepted. Requires matplotlib plus pymatgen for OSZICAR or ASE for OUTCAR.
+Writes `energy_vs_step.png` at 600 dpi beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. A directory (default: `.`) prefers `OSZICAR`, then `OUTCAR`; `.gz` inputs are accepted. Requires matplotlib plus pymatgen for OSZICAR or ASE for OUTCAR.
 
 Defaults to **F / TOTEN** (eV per cell); `--energy E0` selects sigma→0 energy. Steps start at 1 in completed-record order, excluding electronic iterations and unfinished trailing records. The lower panel shows signed adjacent-step energy changes in eV on a linear axis with scientific-notation tick labels. Energy trends alone do not establish force convergence.
 
@@ -313,7 +314,7 @@ cckit inspect-force ./run/OUTCAR --component total --watch 5 --show
 
 By default, plots four curves in **eV/Å**: `max |Fx|`, `max |Fy|`, `max |Fz|`, and `max sqrt(Fx² + Fy² + Fz²)`, each maximum taken over all atoms independently. `--component x/y/z/total` selects one curve. Uses raw OUTCAR forces, including fixed atoms; OSZICAR is not supported. Requires ASE and matplotlib.
 
-Writes `force_vs_step.png` beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. Accepts `OUTCAR.gz` or a directory containing `OUTCAR` (then `OUTCAR.gz`). Steps start at 1 in completed-record order; incomplete trailing force tables or ionic summaries are excluded.
+Writes `force_vs_step.png` at 600 dpi beside the input; `-o` selects another PNG/PDF/SVG path, with bare filenames kept beside the input. Existing plots are replaced. Accepts `OUTCAR.gz` or a directory containing `OUTCAR` (then `OUTCAR.gz`). Steps start at 1 in completed-record order; incomplete trailing force tables or ionic summaries are excluded.
 
 `--watch` refreshes every 5 seconds unless specified, saving when maxima change; Ctrl+C retains the plot. Add `--show` for a GUI window, or omit it on a headless server. Closing the window stops monitoring.
 
@@ -396,6 +397,25 @@ cckit generate-sol POSCAR Y 2 --host Zr --max_structures 100
 ```
 
 Writes numbered `POSCAR` files to `Y2_structures/` in the current directory for this example. Requires pymatgen and enumlib; `--max_structures` limits the output count.
+
+### `atat-sqs` — prepare fixed-cell SQS jobs
+
+Create ATAT inputs and a single-seed Slurm job that replaces host atoms while keeping the POSCAR cell and sites fixed:
+
+```powershell
+cckit atat-sqs POSCAR --solute Nb=1 Fe=1
+cckit atat-sqs D:/data/POSCAR --host Zr --solute Nb=2 --solute Fe=3 Mo=1 --partition cpu1
+```
+
+List any number of distinct solute elements after `--solute`, or repeat `--solute` to append entries. Each `ELEMENT=COUNT` replaces that many host atoms; counts must be positive integers, duplicate elements are rejected, and the total cannot exceed the available host sites. For example, `--solute Nb=2 Fe=3 Mo=1` and `--solute Nb=2 --solute Fe=3 Mo=1` specify the same composition.
+
+For a Zr64 input, the first example creates `SQS_Zr62Nb1Fe1/` beside the input. A bare `-o` directory name is also resolved beside the input; paths containing a directory are honored as given. Existing output directories are refused. For multi-element inputs, specify `--host`; other element sites stay fixed.
+
+Copy the generated directory to a Linux/Slurm cluster, enter it and run `sbatch run_sqs.sh`. Each job uses one CPU and writes `runs/slurm_<jobid>_seed_<seed>/POSCAR_sqs`, a validation report and a `SUCCESS` marker after checking composition, cell and site mapping. Requires Python 3.10+, NumPy and pymatgen both when generating inputs and in the cluster's `python3`; cluster jobs also require ATAT 3.52 or compatible tools supporting `-ms`. The generated directory includes a Chinese `README.md` with the full workflow and output descriptions.
+
+Default pair/triplet cutoffs are 4.8/3.3 Å; adjust `--pair-cutoff` and `--triplet-cutoff` for your material. Fixed-cell symmetry groups must permit integer occupations. `SUCCESS` confirms the workflow and geometry checks; assess SQS statistical quality using `bestcorr.out` and multiple seeds.
+
+Input cell vectors must be right-handed; left-handed cells are rejected to avoid an automatic vector reversal during POSCAR export. Reference coordinates and Selective dynamics flags are retained numerically, with sites grouped by output species; original text formatting and velocities are not retained.
 
 ### `supercell` — repeat a crystal cell
 
