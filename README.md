@@ -221,13 +221,15 @@ Writes sorted structures to `singlepoint/<frame>/POSCAR` beside the trajectory; 
 Extract ionic structures from `OUTCAR`, `vasprun.xml` (also named `vasp.xml`), or `XDATCAR` using ASE:
 
 ```powershell
-cckit convert-vasp-sp ./run/OUTCAR --interval 10 --submit vasp.pbs --KPOINTS
-cckit convert-vasp-sp ./run/XDATCAR --interval 50 -o sp_xdatcar
+cckit convert-vasp-sp ../OUTCAR1 --interval 3 -o singlepoint1 --format outcar
+cckit convert-vasp-sp ./run/vasprun.xml --interval 10 --submit vasp.pbs --KPOINTS
 ```
 
-Sampling starts at the first ionic structure: `--interval 10` selects steps 1, 11, 21, …; the default interval is 1. Writes consecutive jobs to `<input-directory>/singlepoint/0/POSCAR`, `1/POSCAR`, …, preserving atom and element order, each frame's cell, and constraints available to ASE. **XDATCAR does not store constraints.** `.gz` inputs are accepted; renamed files require `--format outcar`, `xml`, or `xdatcar`. The final summary reports the total structures read, sampling interval, number converted to POSCAR, and output directory.
+Sampling starts at the first ionic structure: `--interval 10` selects steps 1, 11, 21, …; the default interval is 1. By default, writes consecutive jobs to `<current-directory>/singlepoint/0/POSCAR`, `1/POSCAR`, …, preserving atom and element order, each frame's cell, and constraints available to ASE. **XDATCAR does not store constraints.** `.gz` inputs are accepted; renamed files require `--format outcar`, `xml`, or `xdatcar`. The final summary reports the total structures read, sampling interval, number converted to POSCAR, and output directory.
 
-Without a neighboring `INCAR`, only POSCARs are written. With `INCAR`, also supply `POTCAR` and `--submit`; add `--KPOINTS` to copy that file. These inputs are copied unchanged, so provide an INCAR suitable for single-point calculations. Existing output directories are refused. `-o` selects a new directory; bare names stay beside the input, and paths containing a directory are used as given. If reading or writing fails partway through, already written jobs remain in the output directory.
+`INCAR` and `POTCAR` are checked independently in the command's working directory: each existing file is copied into every job, and missing files are skipped. `--submit` selects a submission script (relative paths resolve from the working directory), and `--KPOINTS` selects the local `KPOINTS`; each is copied only if it exists, independently of the other files. The input trajectory's directory is not searched for calculation inputs. With no files to copy, only POSCARs are written. Copied inputs are unchanged, so any INCAR should be suitable for single-point calculations.
+
+Existing output directories are refused. All relative `-o` paths resolve from the command's working directory, including bare names; absolute paths are honored. The first example therefore creates `./singlepoint1/` where the command is run. If reading or writing fails partway through, already written jobs remain in the output directory.
 
 ### `prepare-vasp-batch` — distribute inputs to existing POSCAR directories
 

@@ -1,9 +1,11 @@
 # CCkit 功能说明：
 # 按离子步间隔提取 OUTCAR、vasprun.xml/vasp.xml 或 XDATCAR，准备单点计算目录。
-"""Write sampled VASP ionic structures to POSCARs beside the input file.
+"""Write sampled VASP ionic structures to POSCAR jobs in the current directory.
 
 Sampling starts at the first ionic structure. Output jobs are numbered from
 zero, retaining atom order, cells and constraints supplied by ASE's readers.
+Relative output paths resolve from the command's working directory.
+Optional calculation inputs are collected independently from that directory.
 """
 
 import argparse
@@ -42,22 +44,14 @@ def resolve_format(input_path: Path, file_format: str) -> str:
     return VASP_FORMATS[file_format]
 
 
-def collect_vasp_inputs(input_dir: Path, submit: Optional[str], copy_kpoints: bool) -> list[Path]:
-    """Collect shared inputs as in convert-xyz-sp; require them only with INCAR."""
-    incar = input_dir / "INCAR"
-    if not incar.is_file():
-        return []
-    if not submit:
-        raise ValueError("--submit is required when INCAR is present")
-
-    sources = [incar, input_dir / "POTCAR"]
+def collect_vasp_inputs(source_dir: Path, submit: Optional[str], copy_kpoints: bool) -> list[Path]:
+    """Collect each existing optional input independently from the working directory."""
+    sources = [source_dir / "INCAR", source_dir / "POTCAR"]
     if copy_kpoints:
-        sources.append(input_dir / "KPOINTS")
-    sources.append(input_dir / submit)
-    for source in sources:
-        if not source.is_file():
-            raise FileNotFoundError(f"Required VASP input not found: {source}")
-    return sources
+        sources.append(source_dir / "KPOINTS")
+    if submit:
+        sources.append(source_dir / Path(submit).expanduser())
+    return [source for source in sources if source.is_file()]
 
 
 def read_ionic_structures(input_path: Path, file_format: str) -> Iterator[Atoms]:
@@ -89,7 +83,7 @@ def prepare_sp(
     """Create sampled jobs; return total structures read and POSCARs written."""
     if output_dir.exists() or output_dir.is_symlink():
         raise FileExistsError(f"Output already exists: {output_dir}. Choose another -o directory.")
-    sources = collect_vasp_inputs(input_path.parent, submit, copy_kpoints)
+    sources = collect_vasp_inputs(Path.cwd(), submit, copy_kpoints)
 
     total_count = 0
     converted_count = 0
@@ -124,7 +118,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Sample VASP ionic structures into POSCAR jobs; "
-            "copy VASP inputs when INCAR is present beside the input."
+            "independently copy available calculation inputs from the current directory."
         )
     )
     parser.add_argument("input", type=Path, help="OUTCAR, vasprun.xml/vasp.xml or XDATCAR (also .gz)")
@@ -138,13 +132,15 @@ def main() -> None:
     )
     parser.add_argument(
         "-o", "--output", type=str, default="singlepoint",
-        help="New output directory; bare names go beside the input (default: singlepoint)",
+        help="New output directory, relative to the current directory (default: singlepoint)",
     )
     parser.add_argument(
-        "--submit", help="Submission script beside the input (required only when INCAR exists)"
+        "--submit",
+        help="Optional submission script relative to the current directory; copy if it exists",
     )
     parser.add_argument(
-        "--KPOINTS", action="store_true", help="Copy KPOINTS when INCAR exists"
+        "--KPOINTS", action="store_true",
+        help="Copy KPOINTS from the current directory if it exists",
     )
     args = parser.parse_args()
 
@@ -153,10 +149,7 @@ def main() -> None:
     input_path = args.input.expanduser().resolve()
     if not input_path.is_file():
         parser.error(f"Input file not found: {input_path}")
-    output_dir = Path(args.output).expanduser()
-    if not output_dir.is_absolute() and "/" not in args.output and "\\" not in args.output:
-        output_dir = input_path.parent / output_dir
-    output_dir = output_dir.resolve()
+    output_dir = Path(args.output).expanduser().resolve()
 
     try:
         file_format = resolve_format(input_path, args.format)
