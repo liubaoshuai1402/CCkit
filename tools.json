@@ -27,6 +27,10 @@
         "script": "convert_xyz_singlepoint.py",
         "desc": "Generate singlepoint structure"
     },
+    "convert-vasp-sp": {
+        "script": "convert_vasp_singlepoint.py",
+        "desc": "Sample VASP ionic structures into single-point POSCAR jobs"
+    },
     "line-dimer": {
         "script": "line_dimer.py",
         "desc": "add a dimer along a line defined by two atoms"
@@ -37,7 +41,7 @@
     },
     "add-atom": {
         "script": "add_atom.py",
-        "desc": "Add atoms to structure"
+        "desc": "Add one atom by position, midpoint, triangle centroid or M-O direction"
     },
     "remove-atom": {
         "script": "remove_atom.py",
@@ -170,6 +174,10 @@
     "prepare-vasp-batch": {
         "script": "prepare_high_throughput.py",
         "desc": "Distribute VASP input files to all POSCAR directories"
+    },
+    "pre-relax": {
+        "script": "pre_relax.py",
+        "desc": "Back up INCAR and set short pre-relaxation parameters"
     },
     "vasp-displacement": {
         "script": "vasp_displacement.py",

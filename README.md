@@ -9,7 +9,7 @@ A command-line toolkit for modeling, preparing, and analyzing crystal-structure 
 ## What CCkit provides
 
 - **Structure modeling**: supercells, strain and rattling, substitutions, vacancies, and structural edits.
-- **VASP workflow preparation**: single-point calculation folders, POSCAR cleanup and sorting, surface constraints, and OUTCAR comparison.
+- **VASP workflow preparation**: single-point calculation folders, pre-relaxation INCAR settings, POSCAR cleanup and sorting, surface constraints, and OUTCAR comparison.
 - **NEP and GPUMD utilities**: dataset conversion, merging and splitting, configuration labels, NEP relaxation, and NPT averaging.
 - **Trajectory and structure analysis**: hydrogen states, hydrogen vacancies, oxygen vacancies, bond distributions, atom displacements, and cluster connectivity.
 - **NEB workflow support**: image generation, image alignment, trajectory/movie generation, and DFT-versus-NEP barrier plots.
@@ -216,6 +216,19 @@ cckit convert-xyz-sp trajectory.xyz --slice 500::100 --submit vasp.pbs --KPOINTS
 
 Writes sorted structures to `singlepoint/<frame>/POSCAR` beside the trajectory; existing job directories are rejected. If `INCAR` is present there, also provide `POTCAR` and the `--submit` script; `--KPOINTS` includes the k-point file. The last example selects every 100th frame from frame 500.
 
+### `convert-vasp-sp` — sample ionic steps into single-point jobs
+
+Extract ionic structures from `OUTCAR`, `vasprun.xml` (also named `vasp.xml`), or `XDATCAR` using ASE:
+
+```powershell
+cckit convert-vasp-sp ./run/OUTCAR --interval 10 --submit vasp.pbs --KPOINTS
+cckit convert-vasp-sp ./run/XDATCAR --interval 50 -o sp_xdatcar
+```
+
+Sampling starts at the first ionic structure: `--interval 10` selects steps 1, 11, 21, …; the default interval is 1. Writes consecutive jobs to `<input-directory>/singlepoint/0/POSCAR`, `1/POSCAR`, …, preserving atom and element order, each frame's cell, and constraints available to ASE. **XDATCAR does not store constraints.** `.gz` inputs are accepted; renamed files require `--format outcar`, `xml`, or `xdatcar`. The final summary reports the total structures read, sampling interval, number converted to POSCAR, and output directory.
+
+Without a neighboring `INCAR`, only POSCARs are written. With `INCAR`, also supply `POTCAR` and `--submit`; add `--KPOINTS` to copy that file. These inputs are copied unchanged, so provide an INCAR suitable for single-point calculations. Existing output directories are refused. `-o` selects a new directory; bare names stay beside the input, and paths containing a directory are used as given. If reading or writing fails partway through, already written jobs remain in the output directory.
+
 ### `prepare-vasp-batch` — distribute inputs to existing POSCAR directories
 
 Copy shared inputs into existing calculation subdirectories containing `POSCAR`.
@@ -225,6 +238,21 @@ cckit prepare-vasp-batch --root ./calculations --job vasp.pbs
 ```
 
 The root supplies `INCAR`, `POTCAR`, and optional `KPOINTS` and job script. Searches recursively below the root and **replaces existing input copies**, keeping each `POSCAR`.
+
+### `pre-relax` — prepare a short initial relaxation
+
+Ease the initial relaxation of manually built magnetic structures by loosening INCAR settings:
+
+```powershell
+cckit pre-relax
+cckit pre-relax D:/calculations/run/INCAR
+```
+
+Renames the original input to `INCAR-back` beside it, then writes a new INCAR with `EDIFF = 5E-05`, `NSW = 5`, `PREC = N`, and `KSPACING = 0.25`. **All four active parameters must already exist**; missing parameters or an existing backup cause an error before any file changes. `ISPIN` is retained as supplied.
+
+An uncommented `ADDGRID` set to true (`.TRUE.`, `TRUE`, `.T.`, or `T`, case-insensitive) gets a `#` immediately before its name. Missing, false, or already commented settings stay unchanged. If other parameters follow it on the same line, a line break is inserted after the separating semicolon to keep them active.
+
+Otherwise only the four required parameter values are replaced; line order, whitespace, comments, and line endings are preserved. Tags are case-insensitive, and all active duplicates are handled. Target values must be on one line. No third-party dependencies are required. Prepares the input only; run VASP separately.
 
 ### `fix-surface` — constrain a fractional-z interval
 
@@ -400,22 +428,18 @@ Writes numbered `POSCAR` files to `Y2_structures/` in the current directory for 
 
 ### `atat-sqs` — prepare fixed-cell SQS jobs
 
-Create ATAT inputs and a single-seed Slurm job that replaces host atoms while keeping the POSCAR cell and sites fixed:
+Generate ATAT inputs and a Slurm script for substitutional SQS, keeping the cell and atomic sites fixed:
 
 ```powershell
 cckit atat-sqs POSCAR --solute Nb=1 Fe=1
-cckit atat-sqs D:/data/POSCAR --host Zr --solute Nb=2 --solute Fe=3 Mo=1 --partition cpu1
+cckit atat-sqs POSCAR --host Zr --solute Nb=2 Fe=3 Mo=1 --partition cpu1
 ```
 
-List any number of distinct solute elements after `--solute`, or repeat `--solute` to append entries. Each `ELEMENT=COUNT` replaces that many host atoms; counts must be positive integers, duplicate elements are rejected, and the total cannot exceed the available host sites. For example, `--solute Nb=2 Fe=3 Mo=1` and `--solute Nb=2 --solute Fe=3 Mo=1` specify the same composition.
+`ELEMENT=COUNT` sets how many host atoms to replace. Multi-element inputs require `--host`; use a right-handed cell.
 
-For a Zr64 input, the first example creates `SQS_Zr62Nb1Fe1/` beside the input. A bare `-o` directory name is also resolved beside the input; paths containing a directory are honored as given. Existing output directories are refused. For multi-element inputs, specify `--host`; other element sites stay fixed.
+For Zr64, the first example creates `SQS_Zr62Nb1Fe1/` beside the input; existing output directories are refused. Copy it to a Linux/Slurm cluster, enter it, and run `sbatch run_sqs.sh`. The result is `runs/slurm_<jobid>_seed_<seed>/POSCAR_sqs`.
 
-Copy the generated directory to a Linux/Slurm cluster, enter it and run `sbatch run_sqs.sh`. Each job uses one CPU and writes `runs/slurm_<jobid>_seed_<seed>/POSCAR_sqs`, a validation report and a `SUCCESS` marker after checking composition, cell and site mapping. Requires Python 3.10+, NumPy and pymatgen both when generating inputs and in the cluster's `python3`; cluster jobs also require ATAT 3.52 or compatible tools supporting `-ms`. The generated directory includes a Chinese `README.md` with the full workflow and output descriptions.
-
-Default pair/triplet cutoffs are 4.8/3.3 Å; adjust `--pair-cutoff` and `--triplet-cutoff` for your material. Fixed-cell symmetry groups must permit integer occupations. `SUCCESS` confirms the workflow and geometry checks; assess SQS statistical quality using `bestcorr.out` and multiple seeds.
-
-Input cell vectors must be right-handed; left-handed cells are rejected to avoid an automatic vector reversal during POSCAR export. Reference coordinates and Selective dynamics flags are retained numerically, with sites grouped by output species; original text formatting and velocities are not retained.
+Requires Python 3.10+, NumPy and pymatgen locally and on the cluster, plus cluster-side ATAT 3.52 or a compatible version supporting `-ms`. See the generated `README.md` for setup and options. **Assess SQS quality with `bestcorr.out`; `SUCCESS` only confirms workflow and structure checks.**
 
 ### `supercell` — repeat a crystal cell
 
@@ -429,15 +453,18 @@ Reads one structure; defaults to `supercell.xyz` in the current directory.
 
 ### `add-atom` — place one atom by position or geometry
 
-Choose one of three modes. `position` uses Cartesian coordinates, `center` uses the midpoint of two indexed atoms, and `OH` places an atom beyond O along the M-to-O direction:
+Choose one of four modes. `position` uses Cartesian coordinates, `center` uses the midpoint of two indexed atoms, `tricenter` uses the centroid of three indexed atoms, and `OH` places an atom beyond O along the M-to-O direction:
 
 ```powershell
 cckit add-atom POSCAR --mode position --position 1.0 2.0 3.0 --element H
 cckit add-atom POSCAR --mode center --atomA 0 --atomB 1
+cckit add-atom POSCAR --mode tricenter --atomA 0 --atomB 1 --atomC 2 --element H
 cckit add-atom POSCAR --mode OH --M 0 --O 1 --distance 1.0
 ```
 
-Defaults to H and a 1.0 Å distance. Writes beside the input with a geometry-based suffix; `--output` changes the base name, keeping that suffix.
+Defaults to H and a 1.0 Å distance for `OH`. Indices are **0-based**. `tricenter` requires three distinct atoms and selects periodic images so **all three edges simultaneously have their minimum-image distances**, respecting the input cell and PBC, including skew cells. Equal-distance images are considered; if no compatible triangle exists, it raises an error. The centroid is wrapped into the periodic cell without moving the original atoms.
+
+The `tricenter` example writes `POSCAR_tricenter_0_1_2` beside the input. `--output` changes the base name, keeping the geometry suffix; bare names are also placed beside the input, while paths containing a directory are honored as given.
 
 ### `remove-atom` — remove indexed atoms
 
