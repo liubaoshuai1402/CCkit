@@ -41,11 +41,15 @@
     },
     "add-atom": {
         "script": "add_atom.py",
-        "desc": "Add one atom by position, midpoint, triangle centroid or M-O direction"
+        "desc": "Add an atom by position, the center of two to five atoms, or along an M-O line"
     },
     "remove-atom": {
         "script": "remove_atom.py",
         "desc": "Remove atoms from structure"
+    },
+    "save-atoms": {
+        "script": "save_atoms.py",
+        "desc": "Save atoms within a radius of a selected atom"
     },
     "substitute-atom": {
         "script": "substitute_atom.py",
@@ -58,6 +62,10 @@
     "local-bond": {
         "script": "local_bond_analysis.py",
         "desc": "Perform local bond analysis"
+    },
+    "surface-bond": {
+        "script": "surface_bond_analysis.py",
+        "desc": "Analyze layer-resolved metal-oxygen lengths in a slab POSCAR"
     },
     "dft-to-nep": {
         "script": "dft_to_nep.py",
@@ -185,7 +193,7 @@
     },
     "check-convergence": {
         "script": "check_convergence.py",
-        "desc": "Check VASP OUTCAR convergence status"
+        "desc": "Report VASP ionic convergence and normal completion counts"
     },
     "inspect-energy": {
         "script": "inspect_energy.py",

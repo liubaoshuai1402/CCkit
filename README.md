@@ -307,16 +307,16 @@ cckit compare-vasp-ef ./test-a/OUTCAR ./test-b/OUTCAR
 
 Prints energy and force differences alongside `ENCUT` and `NKPTS`. Force indices are one-based; the stress row is a scaled comparison metric, **not a physical stress value**.
 
-### `check-convergence` — scan OUTCAR files
+### `check-convergence` — check convergence and completion
 
-Check calculation directories recursively:
+Scan `OUTCAR` files to count ionic convergence and normal completion separately:
 
 ```powershell
 cckit check-convergence --root ./calculations
 cckit check-convergence --root ./calculations --no-recursive
 ```
 
-Lists calculations with VASP's ionic convergence marker. `--no-recursive` limits the scan to immediate subdirectories; the root's own `OUTCAR` is excluded. This marker alone does not establish electronic convergence or normal termination.
+Lists both statuses for each OUTCAR and summarizes the counts. Ionic convergence uses VASP's structural accuracy marker, while normal completion uses the `General timing and accounting` summary. A calculation can finish without reaching ionic convergence. Files without the completion marker and unreadable files are counted separately. The default scan includes the root and its descendants. `--no-recursive` checks only immediate subdirectories.
 
 ### `inspect-energy` — follow ionic relaxation energies
 
@@ -455,18 +455,23 @@ Reads one structure; defaults to `supercell.xyz` in the current directory.
 
 ### `add-atom` — place one atom by position or geometry
 
-Choose one of four modes. `position` uses Cartesian coordinates, `center` uses the midpoint of two indexed atoms, `tricenter` uses the centroid of three indexed atoms, and `OH` places an atom beyond O along the M-to-O direction:
+`position` uses Cartesian coordinates. `center`, `tricenter`, `quadcenter`, and `pentacenter` use the geometric center of two, three, four, or five indexed atoms, respectively. `OH` places an atom from O along M→O, and `rOH` places it from O along O→M.
 
 ```powershell
 cckit add-atom POSCAR --mode position --position 1.0 2.0 3.0 --element H
 cckit add-atom POSCAR --mode center --atomA 0 --atomB 1
 cckit add-atom POSCAR --mode tricenter --atomA 0 --atomB 1 --atomC 2 --element H
+cckit add-atom POSCAR --mode quadcenter --atomA 0 --atomB 1 --atomC 2 --atomD 3 --element H
+cckit add-atom POSCAR --mode pentacenter --atomA 0 --atomB 1 --atomC 2 --atomD 3 --atomE 4 --element H
 cckit add-atom POSCAR --mode OH --M 0 --O 1 --distance 1.0
+cckit add-atom POSCAR --mode rOH --M 0 --O 1 --distance 1.0
 ```
 
-Defaults to H and a 1.0 Å distance for `OH`. Indices are **0-based**. `tricenter` requires three distinct atoms and selects periodic images so **all three edges simultaneously have their minimum-image distances**, respecting the input cell and PBC, including skew cells. Equal-distance images are considered; if no compatible triangle exists, it raises an error. The centroid is wrapped into the periodic cell without moving the original atoms.
+Indices are **0-based**. `OH` and `rOH` default to H at 1.0 Å from O and use the stored Cartesian coordinates. In the `rOH` example, `--M 0` selects the Zr atom and the command writes `POSCAR_rOH_1_0` beside the input.
 
-The `tricenter` example writes `POSCAR_tricenter_0_1_2` beside the input. `--output` changes the base name, keeping the geometry suffix; bare names are also placed beside the input, while paths containing a directory are honored as given.
+`tricenter`, `quadcenter`, and `pentacenter` require three, four, or five distinct atom indices, respectively. They average the selected positions with equal weights. With periodic boundaries, they choose images that simultaneously realize all pairwise minimum-image distances and wrap the centroid into the cell. They report an error if no such image combination exists.
+
+The `pentacenter` example writes `POSCAR_pentacenter_0_1_2_3_4` beside the input. `--output` changes the base name while keeping the geometry suffix. Bare names are also placed beside the input, while paths containing a directory are honored as given.
 
 ### `remove-atom` — remove indexed atoms
 
@@ -477,6 +482,19 @@ cckit remove-atom POSCAR 0 3 -s Zr O
 ```
 
 Writes `POSCAR_removed_0_3` beside the input. `-o` changes the base name; indices are still appended.
+
+### `save-atoms` — extract a neighborhood around one atom
+
+Keep atom 42 and all atoms within 5 Å of it, including atoms on the cutoff:
+
+```powershell
+cckit save-atoms POSCAR 42 5
+cckit save-atoms POSCAR 42 5 -o neighborhood.xyz
+```
+
+The center index is **0-based**. Periodic distances use the minimum image. The selected atoms keep their stored coordinates and order, and the cell and periodic flags are retained where supported by the output format. Reads the first frame of the input.
+
+The first example writes `POSCAR_saved_42_r5` beside the input. VASP structures default to POSCAR, and other input formats default to ExtXYZ. Bare `-o` names also go beside the input, while paths with a directory are used as given. Existing files are refused.
 
 ### `substitute-atom` — replace indexed atoms
 
@@ -597,6 +615,25 @@ cckit local-bond trajectory.extxyz O Zr 1.2 2.8
 ```
 
 Writes `*bands_dis_local.txt`; `--plt` adds KDE data and plots. Uses the same short/long windows as `global-bond`. **Only the final frame is saved for trajectory input.**
+
+### `surface-bond` — metal-oxygen lengths by slab layer
+
+Analyze a static POSCAR with pymatgen, grouping metal atoms by Cartesian z height and plotting each layer's M–O neighbors.
+
+```powershell
+cckit surface-bond POSCAR --metals Zr
+cckit surface-bond CONTCAR --cutoff 3.2 --layer-tol 1.0 --bandwidth 0.01 -o surface_bonds
+```
+
+The default M–O cutoff is **3 Å**. Each layer has a total z span of at most **1 Å**, numbered from top to bottom with the highest-z layer as layer 1. All metal elements are included by default, and `--metals Zr Hf` selects a subset. Multiple selected metals are pooled within each layer. Layers follow stored z coordinates, so place a contiguous slab parallel to xy. Neighbor searches are periodic along a/b by default. `--periodic-z` also includes c-periodic images. Distinct oxygen images count as separate neighbors, and every bond is assigned to its metal's layer.
+
+Plots show frequency histograms on the left axis and Gaussian KDE density on the right axis, with eight layers per PNG. Each panel is taller, includes 35% vertical headroom above its peaks, and has its own legend fixed at the upper right. Near-equal lengths are grouped with a maximum total span of **0.001 Å**, adjustable with `--length-tol`, so numerical noise in equivalent bonds is counted together. Bar heights are the actual numbers of bonds, and their sum is the layer's total bond count. Bar centers and length marks use each group's mean length. Groups have visible gaps, and `--bar-width` sets their maximum display width in Å (default **0.01 Å**). The former `--bin-width` option is accepted as an alias for this width limit.
+
+Plot text uses bold Arial, with metal-specific panel titles and axis labels such as `Al-O`. KDE curves use a thicker line for readability. Arial must be installed in the environment that generates the plots.
+
+The absolute KDE bandwidth defaults to **0.02 Å**, adjustable with `--bandwidth` for narrow or separated peaks. This smoothing also handles a single bond or identical lengths. The bandwidth describes plotting resolution. Layers without bonds are retained in the report.
+
+Writes `bonds.txt` (individual lengths, zero-based site indices and oxygen image shifts), `layers.txt` (membership, coordination and descriptive statistics), `histogram.txt` (group centers, counts and display widths), `kde.txt` (sampled density curves) and `distributions_*.png` into `<input-stem>_surface_bonds/` beside the input. Bare `-o` names also resolve beside the input. Existing output directories are refused. Requires pymatgen, NumPy and matplotlib.
 
 ### `hydrogen-state` — classify hydrogen in each frame
 
