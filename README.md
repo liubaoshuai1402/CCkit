@@ -133,7 +133,8 @@ Check a command's help message before running it:
 
 ```powershell
 cckit generate-strain -h
-cckit dft-to-nep -h
+cckit dft1-to-nep -h
+cckit dft2-to-nep -h
 ```
 
 General command-line form:
@@ -169,7 +170,7 @@ cckit convert-xyz-sp trajectory.xyz --submit vasp.pbs
 Build an NEP dataset from VASP calculations:
 
 ```powershell
-cckit dft-to-nep --pos ./vasp_calculations
+cckit dft1-to-nep --pos ./vasp_calculations
 cckit split-dataset dataset.xyz --valid_ratio 0.1 --test_ratio 0.1 --shuffle
 ```
 
@@ -739,15 +740,26 @@ Combines local PNGs in filename-number order. `-f` sets frames per second; defau
 
 Organize training data and compare DFT with NEP. Comparison commands require calorine and a trained potential; EOS fitting also needs pymatgen.
 
-### `dft-to-nep` — collect VASP results into an XYZ dataset
+### `dft1-to-nep` — recursively collect VASP results
 
-Recursively find `OUTCAR` files under a calculation directory and read **all frames** from each one:
+Recursively collect the result ASE reads from each `OUTCAR` under a calculation directory. For relaxation or AIMD trajectories where intermediate ionic steps matter, use `dft2-to-nep` instead:
 
 ```powershell
-cckit dft-to-nep --pos ./vasp_calculations --output dataset.xyz --flag apple
+cckit dft1-to-nep --pos ./vasp_calculations --output dataset.xyz --flag apple
 ```
 
-Collects energies, forces, and stress into extended XYZ. `--flag apple` adds `config_type=apple` to every frame's extended XYZ comment line; omit `--flag` to leave the label unset. Defaults to searching the current directory and writing `dataset.xyz` there.
+Recursively collects OUTCAR data from a directory into extended XYZ. `--flag apple` adds `config_type=apple`; omit it to leave labels unset. Defaults to searching the current directory and writing `dataset.xyz` there.
+
+### `dft2-to-nep` — sample ionic steps from one OUTCAR
+
+Run in a calculation directory to retain relaxation or AIMD configurations from a single OUTCAR:
+
+```powershell
+cckit dft2-to-nep
+cckit dft2-to-nep OUTCAR1 --skip 5 --interval 10 --output sampled.xyz
+```
+
+Reads only the specified file in the current directory (default `OUTCAR`); the filename may be customized, for example `OUTCAR1`. `--skip N` discards the first N ionic steps before sampling; `--interval N` then selects every Nth remaining step. Both default to 0 skipped and interval 1, which keeps every step. Writes energies, forces, and stress to extended XYZ beside the input; a bare `--output` filename also goes there. `--flag` optionally sets `config_type` on each frame.
 
 ### `merge-xyz` — combine structure datasets
 

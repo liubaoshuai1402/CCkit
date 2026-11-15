@@ -67,9 +67,13 @@
         "script": "surface_bond_analysis.py",
         "desc": "Analyze layer-resolved metal-oxygen lengths in a slab POSCAR"
     },
-    "dft-to-nep": {
+    "dft1-to-nep": {
         "script": "dft_to_nep.py",
-        "desc": "Collect OUTCAR configurations into extended XYZ with optional config_type labels"
+        "desc": "Recursively collect OUTCAR results into extended XYZ"
+    },
+    "dft2-to-nep": {
+        "script": "dft2_to_nep.py",
+        "desc": "Sample ionic steps from one OUTCAR into extended XYZ"
     },
     "hydrogen-state": {
         "script": "count_H_state.py",
