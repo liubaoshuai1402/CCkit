@@ -1,13 +1,15 @@
-# CCkit 功能说明：从单个 OUTCAR 按离子步间隔提取能量、力和应力，写入扩展 XYZ。
-"""Sample ionic-step data from one OUTCAR into an extended XYZ dataset."""
+# CCkit 功能说明：从单个 OUTCAR 或 VASP XML 按离子步间隔提取计算结果，写入扩展 XYZ。
+"""Sample ionic-step data from one VASP result file into extended XYZ."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
 
 from ase import Atoms
 from ase.io import read, write
+from ase.units import GPa
 
 
 def collect_ionic_steps(
@@ -15,14 +17,24 @@ def collect_ionic_steps(
     interval: int,
     skip: int,
     flag: str | None = None,
+    file_format: str = "auto",
 ) -> list[Atoms]:
-    """Read one OUTCAR and sample its ionic structures after an initial skip."""
-    frames = read(input_path, index=":", format="vasp-out")
+    """Read one OUTCAR/XML file and sample its ionic structures after a skip."""
+    if file_format == "auto":
+        file_format = "xml" if input_path.suffix.lower() == ".xml" else "outcar"
+    ase_format = {"outcar": "vasp-out", "xml": "vasp-xml"}[file_format]
+    frames = read(input_path, index=":", format=ase_format)
     selected = frames[skip::interval]
     for atoms in selected:
         atoms.info["energy"] = atoms.get_potential_energy(force_consistent=True)
-        atoms.info["stress"] = atoms.get_stress(voigt=True)
-        atoms.arrays["force"] = atoms.get_forces()
+        # ASE stress is tensile-positive in eV/Angstrom^3;
+        # NEP virial is compressive-positive in eV, stored as a full 3x3 tensor.
+        volume = atoms.get_volume()
+        virial = -atoms.get_stress(voigt=False) * volume
+        atoms.info["virial"] = virial
+        # Normalize by volume and use the same nine-component order as virial.
+        atoms.info["virial_GPa"] = (virial / volume / GPa).reshape(9, order="F")
+        atoms.arrays["forces"] = atoms.get_forces()
         if flag is not None:
             atoms.info["config_type"] = flag
         atoms.calc = None
@@ -39,11 +51,15 @@ def resolve_output(output: Path, input_path: Path) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Sample ionic steps from one OUTCAR into an extended XYZ dataset."
+        description="Sample ionic steps from one OUTCAR/XML file into extended XYZ."
     )
     parser.add_argument(
-        "input", nargs="?", type=Path, default=Path("OUTCAR"),
-        help="OUTCAR filename in the current calculation directory (default: OUTCAR)",
+        "input", nargs="?", type=Path,
+        help="Result filename in the current directory (default: OUTCAR, or XML with --format xml)",
+    )
+    parser.add_argument(
+        "--format", choices=("auto", "outcar", "xml"), default="auto",
+        help="Input format; auto recognizes .xml and otherwise reads OUTCAR (default: auto)",
     )
     parser.add_argument(
         "--interval", type=int, default=1,
@@ -66,26 +82,32 @@ def main() -> None:
     if args.skip < 0:
         parser.error("--skip must be a non-negative integer")
 
+    if args.input is None:
+        input_names = ("vasp.xml", "vasprun.xml") if args.format == "xml" else ("OUTCAR",)
+        args.input = next(
+            (Path(name) for name in input_names if Path(name).is_file()), Path(input_names[0])
+        )
     input_path = args.input.expanduser().resolve()
     if input_path.parent != Path.cwd().resolve():
-        parser.error("Input must be an OUTCAR file in the current directory.")
+        parser.error("Input must be an OUTCAR/XML result file in the current directory.")
     if not input_path.is_file():
-        parser.error(f"OUTCAR file not found: {input_path}")
+        parser.error(f"VASP result file not found: {input_path}")
     output_path = resolve_output(args.output, input_path)
     if output_path == input_path:
-        parser.error("Output path must differ from the OUTCAR input.")
+        parser.error("Output path must differ from the VASP result input.")
     try:
-        frames = collect_ionic_steps(input_path, args.interval, args.skip, args.flag)
+        frames = collect_ionic_steps(input_path, args.interval, args.skip, args.flag, args.format)
         if not frames:
             parser.error(
                 f"No ionic steps remain after skipping {args.skip} steps in {input_path}."
             )
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        # ASE extxyz writes atomic positions with %16.8f (eight decimal places).
         write(output_path, frames, format="extxyz")
-    except (OSError, ValueError, IndexError, RuntimeError) as error:
+    except (OSError, ValueError, IndexError, RuntimeError, ParseError) as error:
         parser.error(f"Cannot convert {input_path}: {error}")
 
-    print(f"Read one OUTCAR: {input_path}")
+    print(f"Read one VASP result file: {input_path}")
     print(f"Skipped {args.skip} initial ionic steps; sampled every {args.interval} step(s).")
     print(f"Wrote {len(frames)} configurations to {output_path}")
 

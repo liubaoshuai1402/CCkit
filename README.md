@@ -740,26 +740,31 @@ Combines local PNGs in filename-number order. `-f` sets frames per second; defau
 
 Organize training data and compare DFT with NEP. Comparison commands require calorine and a trained potential; EOS fitting also needs pymatgen.
 
+`dft1-to-nep` and `dft2-to-nep` write `energy` in eV, `forces` in eV/Å, and the full 3×3 `virial` tensor in eV, calculated as `-ASE stress × cell volume`. The previous `stress` and singular `force` fields are replaced by `virial` and `forces`.
+
+Each frame also includes `virial_GPa`, the volume-normalized virial converted to GPa using ASE's unit constant (`virial / volume / ase.units.GPa`). Its nine components follow the same order as `virial`, with compression positive. This additional metadata leaves the NEP-standard `virial` field in eV.
+
 ### `dft1-to-nep` — recursively collect VASP results
 
-Recursively collect the result ASE reads from each `OUTCAR` under a calculation directory. For relaxation or AIMD trajectories where intermediate ionic steps matter, use `dft2-to-nep` instead:
+Recursively collect all ionic frames from VASP result files under a calculation directory. To skip initial frames or sample at intervals from one result file, use `dft2-to-nep` instead:
 
 ```powershell
 cckit dft1-to-nep --pos ./vasp_calculations --output dataset.xyz --flag apple
+cckit dft1-to-nep --pos ./vasp_calculations --format xml --output dataset_xml.xyz --flag apple
 ```
 
-Recursively collects OUTCAR data from a directory into extended XYZ. `--flag apple` adds `config_type=apple`; omit it to leave labels unset. Defaults to searching the current directory and writing `dataset.xyz` there.
+Defaults to `OUTCAR`; `--format xml` reads `vasp.xml` or `vasprun.xml`, preferring `vasp.xml` when both exist in one directory to avoid duplicate frames. Atomic positions use eight decimal places, and the per-atom force field is named `forces`. `--flag apple` adds `config_type=apple`; omit it to leave labels unset. The default `dataset.xyz` and bare `--output` filenames go under `--pos`; an output containing a directory is used as specified.
 
-### `dft2-to-nep` — sample ionic steps from one OUTCAR
+### `dft2-to-nep` — sample ionic steps from one VASP result file
 
-Run in a calculation directory to retain relaxation or AIMD configurations from a single OUTCAR:
+Run in a calculation directory to retain relaxation or AIMD configurations from a single OUTCAR or VASP XML file:
 
 ```powershell
 cckit dft2-to-nep
-cckit dft2-to-nep OUTCAR1 --skip 5 --interval 10 --output sampled.xyz
+cckit dft2-to-nep vasp.xml --skip 5 --interval 10 --output sampled.xyz --flag apple
 ```
 
-Reads only the specified file in the current directory (default `OUTCAR`); the filename may be customized, for example `OUTCAR1`. `--skip N` discards the first N ionic steps before sampling; `--interval N` then selects every Nth remaining step. Both default to 0 skipped and interval 1, which keeps every step. Writes energies, forces, and stress to extended XYZ beside the input; a bare `--output` filename also goes there. `--flag` optionally sets `config_type` on each frame.
+Reads only the specified file in the current directory (default `OUTCAR`). A `.xml` filename selects ASE's VASP XML reader; use `--format xml` for a renamed XML file. With no filename, `--format xml` selects `vasp.xml`, falling back to `vasprun.xml`. `--skip N` discards the first N ionic steps before `--interval N` selects every Nth remaining step; defaults keep every step. Writes extended XYZ beside the input, with eight-decimal atomic positions and the per-atom `forces` field; a bare `--output` filename also goes there. `--flag` optionally sets `config_type` on each frame.
 
 ### `merge-xyz` — combine structure datasets
 

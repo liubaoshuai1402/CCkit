@@ -69,11 +69,11 @@
     },
     "dft1-to-nep": {
         "script": "dft_to_nep.py",
-        "desc": "Recursively collect OUTCAR results into extended XYZ"
+        "desc": "Recursively collect OUTCAR or VASP XML results into extended XYZ"
     },
     "dft2-to-nep": {
         "script": "dft2_to_nep.py",
-        "desc": "Sample ionic steps from one OUTCAR into extended XYZ"
+        "desc": "Sample ionic steps from one OUTCAR or VASP XML file into extended XYZ"
     },
     "hydrogen-state": {
         "script": "count_H_state.py",
