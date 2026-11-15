@@ -530,16 +530,6 @@ Defaults to H with a 0.74 Å dimer separation (`2r`). Writes `dimer_added.xyz` i
 
 Prepare NEP datasets and process GPUMD results. NEP relaxation requires calorine and a trained potential.
 
-### `dft-to-nep` — collect VASP results into an XYZ dataset
-
-Recursively find `OUTCAR` files under a calculation directory and read **all frames** from each one:
-
-```powershell
-cckit dft-to-nep --pos ./vasp_calculations --output dataset.xyz
-```
-
-Collects energies, forces, and stress into extended XYZ. Defaults to searching the current directory and writing `dataset.xyz` there.
-
 ### `split-dataset` — make train, validation, and test sets
 
 Split every frame of an ASE-readable dataset into three XYZ files:
@@ -748,6 +738,16 @@ Combines local PNGs in filename-number order. `-f` sets frames per second; defau
 ## NEP training module: command reference
 
 Organize training data and compare DFT with NEP. Comparison commands require calorine and a trained potential; EOS fitting also needs pymatgen.
+
+### `dft-to-nep` — collect VASP results into an XYZ dataset
+
+Recursively find `OUTCAR` files under a calculation directory and read **all frames** from each one:
+
+```powershell
+cckit dft-to-nep --pos ./vasp_calculations --output dataset.xyz --flag apple
+```
+
+Collects energies, forces, and stress into extended XYZ. `--flag apple` adds `config_type=apple` to every frame's extended XYZ comment line; omit `--flag` to leave the label unset. Defaults to searching the current directory and writing `dataset.xyz` there.
 
 ### `merge-xyz` — combine structure datasets
 

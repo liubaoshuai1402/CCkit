@@ -69,7 +69,7 @@
     },
     "dft-to-nep": {
         "script": "dft_to_nep.py",
-        "desc": "add all your OUTCARs into one xyz for NEP"
+        "desc": "Collect OUTCAR configurations into extended XYZ with optional config_type labels"
     },
     "hydrogen-state": {
         "script": "count_H_state.py",
