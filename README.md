@@ -746,12 +746,14 @@ Each frame also includes `virial_GPa`, the volume-normalized virial converted to
 
 ### `dft1-to-nep` — recursively collect VASP results
 
-Recursively collect all ionic frames from VASP result files under a calculation directory. To skip initial frames or sample at intervals from one result file, use `dft2-to-nep` instead:
+Recursively collect and sample ionic frames from VASP result files under a calculation directory. For one result file with an optional initial skip, use `dft2-to-nep` instead:
 
 ```powershell
-cckit dft1-to-nep --pos ./vasp_calculations --output dataset.xyz --flag apple
-cckit dft1-to-nep --pos ./vasp_calculations --format xml --output dataset_xml.xyz --flag apple
+cckit dft1-to-nep --pos ./vasp_calculations --interval 10 --output dataset.xyz --flag apple
+cckit dft1-to-nep --pos ./vasp_calculations --format xml --interval 10 --output dataset_xml.xyz --flag apple
 ```
+
+`--interval N` samples each file independently from its first ionic step: `--interval 10` keeps steps 1, 11, 21, etc. Single-step files are always retained; the default interval 1 keeps every step. This also applies to XML inputs. The completion report lists the total frames read, interval, and frames written.
 
 Defaults to `OUTCAR`; `--format xml` reads `vasp.xml` or `vasprun.xml`, preferring `vasp.xml` when both exist in one directory to avoid duplicate frames. Atomic positions use eight decimal places, and the per-atom force field is named `forces`. `--flag apple` adds `config_type=apple`; omit it to leave labels unset. The default `dataset.xyz` and bare `--output` filenames go under `--pos`; an output containing a directory is used as specified.
 

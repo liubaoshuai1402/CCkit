@@ -69,7 +69,7 @@
     },
     "dft1-to-nep": {
         "script": "dft_to_nep.py",
-        "desc": "Recursively collect OUTCAR or VASP XML results into extended XYZ"
+        "desc": "Recursively sample OUTCAR or VASP XML results into extended XYZ"
     },
     "dft2-to-nep": {
         "script": "dft2_to_nep.py",

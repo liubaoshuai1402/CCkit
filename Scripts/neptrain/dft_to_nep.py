@@ -17,8 +17,11 @@ def outcar_to_nepxyz(
     output: str,
     flag: Optional[str] = None,
     file_format: str = "outcar",
+    interval: int = 1,
 ) -> None:
-    """Read all frames from one selected result file per calculation directory."""
+    """Sample each calculation's result independently, starting at its first frame."""
+    if interval <= 0:
+        raise ValueError("--interval must be a positive integer")
     source_dir = Path(pos).expanduser().resolve()
     if not source_dir.is_dir():
         raise FileNotFoundError(f"Calculation directory not found: {source_dir}")
@@ -30,6 +33,7 @@ def outcar_to_nepxyz(
     input_names = ("OUTCAR",) if file_format == "outcar" else ("vasp.xml", "vasprun.xml")
     db = []
     source_count = 0
+    total_count = 0
     for root, dirs, files in os.walk(source_dir):
         dirs.sort()
         input_name = next((name for name in input_names if name in files), None)
@@ -37,7 +41,10 @@ def outcar_to_nepxyz(
             input_path = Path(root) / input_name
             if input_path.resolve() == output_path:
                 raise ValueError(f"Output path must differ from the VASP result input: {input_path}")
-            db.extend(read(input_path, index=":", format=ase_format))
+            frames = read(input_path, index=":", format=ase_format)
+            total_count += len(frames)
+            # Starting each file at index 0 also retains every single-step result.
+            db.extend(frames[::interval])
             source_count += 1
     if not db:
         raise ValueError(f"No configurations found in {source_dir} for format {file_format}")
@@ -57,7 +64,8 @@ def outcar_to_nepxyz(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     # ASE extxyz writes atomic positions with %16.8f (eight decimal places).
     write(output_path, db, format="extxyz")
-    print(f"Read {len(db)} configurations from {source_count} {file_format} file(s).")
+    print(f"Read {total_count} configurations from {source_count} {file_format} file(s).")
+    print(f"Sampling interval: {interval}; wrote {len(db)} configurations.")
     print(f"Saved: {output_path}")
 
 
@@ -75,14 +83,23 @@ def main() -> None:
         help="Result files to collect: OUTCAR or vasp.xml/vasprun.xml (default: outcar)",
     )
     parser.add_argument(
+        "--interval", type=int, default=1,
+        help=(
+            "Keep every Nth ionic step from the first step of each file; "
+            "single-step files are kept (default: 1)"
+        ),
+    )
+    parser.add_argument(
         "--flag", type=str,
         help="Set config_type to this label for every output configuration (optional)",
     )
 
     args = parser.parse_args()
+    if args.interval <= 0:
+        parser.error("--interval must be a positive integer")
 
     try:
-        outcar_to_nepxyz(args.pos, args.output, args.flag, args.format)
+        outcar_to_nepxyz(args.pos, args.output, args.flag, args.format, args.interval)
     except (OSError, ValueError, IndexError, RuntimeError, ParseError) as error:
         parser.error(f"Cannot convert {args.pos}: {error}")
 
